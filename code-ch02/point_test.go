@@ -1,17 +1,16 @@
-package ecc_test
+package code_ch02
 
 import (
-	"programmingbitcoin/code-ch02"
 	"testing"
 )
 
 func TestAdd0(t *testing.T) {
-    var x ecc.IntWrapper = 2
-    var y ecc.IntWrapper = 5
-    var a ecc.IntWrapper = 5
-    var b ecc.IntWrapper = 7
-    pa, _ := ecc.NewPoint(nil, nil, a, b)
-    pb, err := ecc.NewPoint(x, y, a, b)
+    var x IntWrapper = 2
+    var y IntWrapper = 5
+    var a IntWrapper = 5
+    var b IntWrapper = 7
+    pa, _ := NewPoint(nil, nil, a, b)
+    pb, err := NewPoint(x, y, a, b)
     if err != nil {
       t.Errorf("%v\n", err)
     }

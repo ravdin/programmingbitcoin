@@ -1,27 +1,26 @@
-package ecc_test
+package code_ch01
 
 import (
-	"programmingbitcoin/code-ch01"
 	"testing"
 )
 
 type FieldElementTest struct {
-	a        *ecc.FieldElement
-	b        *ecc.FieldElement
-	expected *ecc.FieldElement
+	a        *FieldElement
+	b        *FieldElement
+	expected *FieldElement
 }
 
 func TestAdd(t *testing.T) {
 	tests := []FieldElementTest{
 		FieldElementTest{
-			a:        ecc.NewFieldElement(2, 31),
-			b:        ecc.NewFieldElement(15, 31),
-			expected: ecc.NewFieldElement(17, 31),
+			a:        NewFieldElement(2, 31),
+			b:        NewFieldElement(15, 31),
+			expected: NewFieldElement(17, 31),
 		},
 		FieldElementTest{
-			a:        ecc.NewFieldElement(17, 31),
-			b:        ecc.NewFieldElement(21, 31),
-			expected: ecc.NewFieldElement(7, 31),
+			a:        NewFieldElement(17, 31),
+			b:        NewFieldElement(21, 31),
+			expected: NewFieldElement(7, 31),
 		},
 	}
 	for _, test := range tests {
@@ -32,9 +31,9 @@ func TestAdd(t *testing.T) {
 }
 
 func TestPow(t *testing.T) {
-	a := ecc.NewFieldElement(17, 31)
+	a := NewFieldElement(17, 31)
 	actual := a.Pow(3)
-	expected := ecc.NewFieldElement(15, 31)
+	expected := NewFieldElement(15, 31)
 	if !actual.Eq(expected) {
 		t.Errorf("Wanted %+v, got %+v", expected, actual)
 	}

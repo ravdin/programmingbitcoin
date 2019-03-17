@@ -1,4 +1,4 @@
-package ecc
+package code_ch02
 
 // Helper class for testing Point with non-finite integer fields.
 type IntWrapper int64

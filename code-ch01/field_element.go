@@ -1,4 +1,4 @@
-package ecc
+package code_ch01
 
 import (
 	"fmt"
@@ -18,6 +18,10 @@ func NewFieldElement(num int64, prime int64) *FieldElement {
 	result.Num = num
 	result.Prime = prime
 	return result
+}
+
+func (self *FieldElement) String() string {
+	return fmt.Sprintf("FieldElement_%d(%d)", self.Prime, self.Num)
 }
 
 func (self *FieldElement) Eq(other *FieldElement) bool {

@@ -1,4 +1,4 @@
-package ecc
+package code_ch02
 
 import (
   "fmt"
