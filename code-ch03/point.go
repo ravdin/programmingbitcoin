@@ -1,4 +1,4 @@
-package code_ch02
+package code_ch03
 
 import (
 	"errors"
@@ -37,7 +37,7 @@ func (self *Point) String() string {
 	if self.X == nil {
 		return "Point(infinity)"
 	} else {
-		return fmt.Sprintf("Point(%d,%d)_%d_%d", self.X, self.Y, self.A, self.B)
+		return fmt.Sprintf("Point(%v,%v)_%v_%v", self.X, self.Y, self.A, self.B)
 	}
 }
 

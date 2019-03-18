@@ -40,7 +40,7 @@ func (self *FieldElement) Add(other *FieldElement) *FieldElement {
 	return NewFieldElement(num, self.Prime)
 }
 
-func (self *FieldElement) Subtract(other *FieldElement) *FieldElement {
+func (self *FieldElement) Sub(other *FieldElement) *FieldElement {
 	if self.Prime != other.Prime {
 		panic("Cannot subtract two numbers in different Fields")
 	}
@@ -52,11 +52,12 @@ func (self *FieldElement) Subtract(other *FieldElement) *FieldElement {
 
 func (self *FieldElement) Pow(exponent int64) *FieldElement {
 	n := exponent % (self.Prime - 1)
-	num := IntPow(self.Num, n, self.Prime)
+	num := intPow(self.Num, n, self.Prime)
 	return NewFieldElement(num, self.Prime)
 }
 
-func IntPow(num int64, exponent int64, mod int64) int64 {
+// Integer exponent (doesn't exist in golang's math package).
+func intPow(num int64, exponent int64, mod int64) int64 {
 	if exponent < 0 {
 		panic("Exponent cannot be negative")
 	}
