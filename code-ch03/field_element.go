@@ -14,10 +14,7 @@ func NewFieldElement(num int64, prime int64) *FieldElement {
 		panic(fmt.Sprintf("Num %d not in field range 0 to %d", num, prime-1))
 	}
 
-	result := new(FieldElement)
-	result.Num = num
-	result.Prime = prime
-	return result
+	return &FieldElement{Num: num, Prime: prime}
 }
 
 func (self *FieldElement) String() string {
@@ -30,7 +27,7 @@ func (self *FieldElement) Eq(other interface{}) bool {
 }
 
 func (self *FieldElement) Ne(other interface{}) bool {
-	o := other.(FieldElement)
+	o := other.(*FieldElement)
 	return self.Num != o.Num || self.Prime != o.Prime
 }
 

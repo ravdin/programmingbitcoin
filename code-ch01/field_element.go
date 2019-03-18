@@ -13,11 +13,7 @@ func NewFieldElement(num int64, prime int64) *FieldElement {
 	if num >= prime || num < 0 {
 		panic(fmt.Sprintf("Num %d not in field range 0 to %d", num, prime-1))
 	}
-
-	result := new(FieldElement)
-	result.Num = num
-	result.Prime = prime
-	return result
+	return &FieldElement{Num: num, Prime: prime}
 }
 
 func (self *FieldElement) String() string {
