@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"fmt"
+	"math/big"
 )
 
 type FieldElement struct {
@@ -20,24 +21,28 @@ func (self *FieldElement) String() string {
 	return fmt.Sprintf("FieldElement_%d(%d)", self.Prime, self.Num)
 }
 
-func (self *FieldElement) Eq(other *FieldElement) bool {
-	return self.Num == other.Num && self.Prime == other.Prime
+func (self *FieldElement) Eq(other interface{}) bool {
+	o := other.(*FieldElement)
+	return self.Num == o.Num && self.Prime == o.Prime
 }
 
-func (self *FieldElement) Ne(other *FieldElement) bool {
-	return self.Num != other.Num || self.Prime != other.Prime
+func (self *FieldElement) Ne(other interface{}) bool {
+	o := other.(*FieldElement)
+	return self.Num != o.Num || self.Prime != o.Prime
 }
 
-func (self *FieldElement) Add(other *FieldElement) *FieldElement {
-	if self.Prime != other.Prime {
+func (self *FieldElement) Add(other interface{}) FieldInteger {
+	o := other.(*FieldElement)
+	if self.Prime != o.Prime {
 		panic("Cannot add two numbers in different Fields")
 	}
-	num := (self.Num + other.Num) % self.Prime
+	num := (self.Num + o.Num) % self.Prime
 	return NewFieldElement(num, self.Prime)
 }
 
-func (self *FieldElement) Sub(other *FieldElement) *FieldElement {
-	if self.Prime != other.Prime {
+func (self *FieldElement) Sub(other interface{}) FieldInteger {
+	o := other.(*FieldElement)
+	if self.Prime != o.Prime {
 		panic("Cannot subtract two numbers in different Fields")
 	}
 	// self.num and other.num are the actual values
@@ -46,10 +51,22 @@ func (self *FieldElement) Sub(other *FieldElement) *FieldElement {
 	panic("Not implemented")
 }
 
-func (self *FieldElement) Pow(exponent int64) *FieldElement {
-	n := exponent % (self.Prime - 1)
+func (self *FieldElement) Mul(other interface{}) FieldInteger {
+	panic("Not implemented")
+}
+
+func (self *FieldElement) Div(other interface{}) FieldInteger {
+	panic("Not implemented")
+}
+
+func (self *FieldElement) Pow(exponent *big.Int) FieldInteger {
+	n := exponent.Int64() % (self.Prime - 1)
 	num := intPow(self.Num, n, self.Prime)
 	return NewFieldElement(num, self.Prime)
+}
+
+func (self *FieldElement) Rmul(coeff *big.Int) FieldInteger {
+	panic("Not implemented")
 }
 
 // Integer exponent (doesn't exist in golang's math package).
