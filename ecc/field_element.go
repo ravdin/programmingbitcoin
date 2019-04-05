@@ -45,22 +45,30 @@ func (self *FieldElement) Sub(other interface{}) FieldInteger {
 	if self.Prime != o.Prime {
 		panic("Cannot subtract two numbers in different Fields")
 	}
-	// self.num and other.num are the actual values
-	// self.prime is what we need to mod against
-	// We return an element of the same class
-	panic("Not implemented")
+	num := (self.Num - o.Num + self.Prime) % self.Prime
+	return NewFieldElement(num, self.Prime)
 }
 
 func (self *FieldElement) Mul(other interface{}) FieldInteger {
-	panic("Not implemented")
+	o := other.(*FieldElement)
+	if self.Prime != o.Prime {
+		panic("Cannot multiply two numbers in different Fields")
+	}
+	num := (self.Num * o.Num) % self.Prime
+	return NewFieldElement(num, self.Prime)
 }
 
 func (self *FieldElement) Div(other interface{}) FieldInteger {
-	panic("Not implemented")
+	o := other.(*FieldElement)
+	if self.Prime != o.Prime {
+		panic("Cannot divide two numbers in different Fields")
+	}
+	num := (self.Num * intPow(o.Num, self.Prime-2, self.Prime)) % self.Prime
+	return NewFieldElement(num, self.Prime)
 }
 
 func (self *FieldElement) Pow(exponent *big.Int) FieldInteger {
-	n := exponent.Int64() % (self.Prime - 1)
+	n := (exponent.Int64() + self.Prime - 1) % (self.Prime - 1)
 	num := intPow(self.Num, n, self.Prime)
 	return NewFieldElement(num, self.Prime)
 }
