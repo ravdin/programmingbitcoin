@@ -82,7 +82,7 @@ func (self *S256Field) Div(other interface{}) FieldInteger {
 func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
 	var num, m, n *big.Int
 	m.Set(self.Prime).Sub(m, big.NewInt(1))
-	n.Set(exponent).Mod(n, m)
+	n.Set(exponent).Add(n, self.Prime).Mod(n, m)
 	num.Set(self.Num).Exp(num, n, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
