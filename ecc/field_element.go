@@ -21,17 +21,17 @@ func (self *FieldElement) String() string {
 	return fmt.Sprintf("FieldElement_%d(%d)", self.Prime, self.Num)
 }
 
-func (self *FieldElement) Eq(other interface{}) bool {
+func (self *FieldElement) Eq(other FieldInteger) bool {
 	o := other.(*FieldElement)
 	return self.Num == o.Num && self.Prime == o.Prime
 }
 
-func (self *FieldElement) Ne(other interface{}) bool {
+func (self *FieldElement) Ne(other FieldInteger) bool {
 	o := other.(*FieldElement)
 	return self.Num != o.Num || self.Prime != o.Prime
 }
 
-func (self *FieldElement) Add(other interface{}) FieldInteger {
+func (self *FieldElement) Add(other FieldInteger) FieldInteger {
 	o := other.(*FieldElement)
 	if self.Prime != o.Prime {
 		panic("Cannot add two numbers in different Fields")
@@ -40,7 +40,7 @@ func (self *FieldElement) Add(other interface{}) FieldInteger {
 	return NewFieldElement(num, self.Prime)
 }
 
-func (self *FieldElement) Sub(other interface{}) FieldInteger {
+func (self *FieldElement) Sub(other FieldInteger) FieldInteger {
 	o := other.(*FieldElement)
 	if self.Prime != o.Prime {
 		panic("Cannot subtract two numbers in different Fields")
@@ -49,7 +49,7 @@ func (self *FieldElement) Sub(other interface{}) FieldInteger {
 	return NewFieldElement(num, self.Prime)
 }
 
-func (self *FieldElement) Mul(other interface{}) FieldInteger {
+func (self *FieldElement) Mul(other FieldInteger) FieldInteger {
 	o := other.(*FieldElement)
 	if self.Prime != o.Prime {
 		panic("Cannot multiply two numbers in different Fields")
@@ -58,7 +58,7 @@ func (self *FieldElement) Mul(other interface{}) FieldInteger {
 	return NewFieldElement(num, self.Prime)
 }
 
-func (self *FieldElement) Div(other interface{}) FieldInteger {
+func (self *FieldElement) Div(other FieldInteger) FieldInteger {
 	o := other.(*FieldElement)
 	if self.Prime != o.Prime {
 		panic("Cannot divide two numbers in different Fields")
