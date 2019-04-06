@@ -6,30 +6,6 @@ import (
 	"math/big"
 )
 
-var G *Point
-var A *big.Int
-var B *big.Int
-var N *big.Int
-var P *big.Int
-
-func init() {
-	A = big.NewInt(0)
-	B = big.NewInt(7)
-	N = new(big.Int)
-	N.SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
-
-	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
-	P = new(big.Int)
-	P.SetString("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f", 16)
-
-	Gx := "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-	Gy := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
-	var x, y big.Int
-	x.SetString(Gx, 16)
-	y.SetString(Gy, 16)
-	G, _ = NewS256Point(&x, &y)
-}
-
 type Point struct {
 	X FieldInteger
 	Y FieldInteger
@@ -49,14 +25,6 @@ func NewPoint(x_arg interface{}, y_arg interface{}, a_arg interface{}, b_arg int
 		return nil, errors.New(fmt.Sprintf("(%d, %d) is not on the curve", x, y))
 	}
 	return &Point{X: x, Y: y, A: a, B: b}, nil
-}
-
-func NewS256Point(x *big.Int, y *big.Int) (*Point, error) {
-	withBigInt := func(bigint interface{}) FieldInteger {
-		return NewS256Field(bigint.(*big.Int), P)
-	}
-	result, err := NewPoint(x, y, A, B, withBigInt)
-	return result, err
 }
 
 func (self *Point) String() string {

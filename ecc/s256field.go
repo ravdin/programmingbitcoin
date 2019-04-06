@@ -105,7 +105,14 @@ func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
 func (self *S256Field) Rmul(coeff *big.Int) FieldInteger {
 	var num = new(big.Int)
 	var c = new(big.Int)
-	c.Set(coeff).Mod(c, self.Prime)
+	c.Mod(coeff, self.Prime)
 	num.Set(self.Num).Mul(num, c).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
+}
+
+func (self *S256Field) Sqrt() FieldInteger {
+	var e *big.Int = new(big.Int)
+	e.Add(self.Prime, big.NewInt(1))
+	e.Div(e, big.NewInt(4))
+	return self.Pow(e)
 }
