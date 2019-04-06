@@ -69,12 +69,16 @@ func (self *Point) String() string {
 
 func (self *Point) Eq(other *Point) bool {
 	if self.X == nil {
-		return self.Y == nil
+		return other.X == nil
 	}
 	return self.X.Eq(other.X) &&
 		self.Y.Eq(other.Y) &&
 		self.A.Eq(other.A) &&
 		self.B.Eq(other.B)
+}
+
+func (self *Point) Ne(other *Point) bool {
+	return !self.Eq(other)
 }
 
 func (self *Point) Add(other *Point) *Point {
@@ -125,4 +129,21 @@ func (self *Point) Add(other *Point) *Point {
 	x := s.Pow(big.NewInt(2)).Sub(self.X.Rmul(big.NewInt(2)))
 	y := s.Mul(self.X.Sub(x)).Sub(self.Y)
 	return &Point{X: x, Y: y, A: self.A, B: self.B}
+}
+
+func (self *Point) Rmul(coefficient *big.Int) *Point {
+	var coef *big.Int = new(big.Int)
+	var z *big.Int = new(big.Int)
+	coef.Set(coefficient)
+	var current *Point = &Point{X: self.X, Y: self.Y, A: self.A, B: self.B}
+	var result *Point = &Point{X: nil, Y: nil, A: self.A, B: self.B}
+	for coef.Cmp(big.NewInt(0)) != 0 {
+		z.And(coef, big.NewInt(1))
+		if z.Cmp(big.NewInt(1)) == 0 {
+			result = result.Add(current)
+		}
+		current = current.Add(current)
+		coef.Rsh(coef, 1)
+	}
+	return result
 }
