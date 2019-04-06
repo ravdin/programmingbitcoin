@@ -1,8 +1,8 @@
 package ecc
 
 import (
-	"testing"
 	"math/big"
+	"testing"
 )
 
 func Test256Field(t *testing.T) {

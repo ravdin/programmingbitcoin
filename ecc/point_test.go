@@ -39,23 +39,39 @@ func TestPoint(t *testing.T) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 	})
-	/*
 
-	   def test_add0(self):
-	       a = Point(x=None, y=None, a=5, b=7)
-	       b = Point(x=2, y=5, a=5, b=7)
-	       c = Point(x=2, y=-5, a=5, b=7)
-	       self.assertEqual(a + b, b)
-	       self.assertEqual(b + a, b)
-	       self.assertEqual(b + c, a)
-
-	   def test_add1(self):
-	       a = Point(x=3, y=7, a=5, b=7)
-	       b = Point(x=-1, y=-1, a=5, b=7)
-	       self.assertEqual(a + b, Point(x=2, y=-5, a=5, b=7))
-
-	   def test_add2(self):
-	       a = Point(x=-1, y=1, a=5, b=7)
-	       self.assertEqual(a + a, Point(x=18, y=-77, a=5, b=7))
-	*/
+	t.Run("TestAdd", func(t *testing.T) {
+		a, _ := NewPoint(nil, nil, 5, 7, option)
+		b, _ := NewPoint(2, 5, 5, 7, option)
+		c, _ := NewPoint(2, -5, 5, 7, option)
+		d, _ := NewPoint(3, 7, 5, 7, option)
+		e, _ := NewPoint(-1, -1, 5, 7, option)
+		f, _ := NewPoint(2, -5, 5, 7, option)
+		g, _ := NewPoint(-1, 1, 5, 7, option)
+		h, _ := NewPoint(18, -77, 5, 7, option)
+		tests := [][]*Point{
+			{
+				a.Add(b), b,
+			},
+			{
+				b.Add(a), b,
+			},
+			{
+				b.Add(c), a,
+			},
+			{
+				d.Add(e), f,
+			},
+			{
+				g.Add(g), h,
+			},
+		}
+		for _, test := range tests {
+			actual := test[0]
+			expected := test[1]
+			if !actual.Eq(expected) {
+				t.Errorf("Expected %v, got %v", expected, actual)
+			}
+		}
+	})
 }

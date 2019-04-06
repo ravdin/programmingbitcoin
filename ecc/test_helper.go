@@ -66,7 +66,8 @@ func (self *intWrapper) Mul(other FieldInteger) FieldInteger {
 }
 
 func (self *intWrapper) Div(other FieldInteger) FieldInteger {
-	panic("Not implemented")
+	o := other.(*intWrapper)
+	return newIntWrapper(self.n / o.n)
 }
 
 func (self *intWrapper) Pow(exponent *big.Int) FieldInteger {
@@ -76,5 +77,5 @@ func (self *intWrapper) Pow(exponent *big.Int) FieldInteger {
 }
 
 func (self *intWrapper) Rmul(coeff *big.Int) FieldInteger {
-	panic("Not implemented")
+	return newIntWrapper(int(coeff.Int64()) * self.n)
 }
