@@ -1,13 +1,9 @@
 package ecc
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
 )
-
-// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
-const P string = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F"
 
 // Similar to FieldElement, but we will allow 256 bit integers.
 type S256Field struct {
@@ -15,47 +11,44 @@ type S256Field struct {
 	Prime *big.Int
 }
 
-func NewS256Field(num *big.Int) *S256Field {
-	decoded, _ := hex.DecodeString(P)
-	var prime big.Int
-	prime.SetBytes(decoded)
-	if num.Cmp(big.NewInt(0)) < 0 || num.Cmp(&prime) >= 0 {
+func NewS256Field(num *big.Int, prime *big.Int) *S256Field {
+	if num.Cmp(big.NewInt(0)) < 0 || num.Cmp(prime) >= 0 {
 		panic(fmt.Sprintf("Num %d not in valid field range", num))
 	}
-	return &S256Field{Num: num, Prime: &prime}
+	return &S256Field{Num: num, Prime: prime}
 }
 
 func (self *S256Field) String() string {
-	return fmt.Sprintf("S256Field(%d)", self.Num)
+	return fmt.Sprintf("S256Field(%d)(%d)", self.Num, self.Prime)
 }
 
 func (self *S256Field) Eq(other FieldInteger) bool {
 	o := other.(*S256Field)
-	return self.Num.Cmp(o.Num) == 0
+	return self.Num.Cmp(o.Num) == 0 && self.Prime.Cmp(o.Prime) == 0
 }
 
 func (self *S256Field) Ne(other FieldInteger) bool {
 	o := other.(*S256Field)
-	return self.Num.Cmp(o.Num) != 0
+	return self.Num.Cmp(o.Num) != 0 || self.Prime.Cmp(o.Prime) != 0
 }
 
 func (self *S256Field) Add(other FieldInteger) FieldInteger {
 	o := other.(*S256Field)
-	var num *big.Int
+	var num = new(big.Int)
 	num.Set(self.Num).Add(num, o.Num).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
 func (self *S256Field) Sub(other FieldInteger) FieldInteger {
 	o := other.(*S256Field)
-	var num *big.Int
+	var num = new(big.Int)
 	num.Set(self.Num).Sub(num, o.Num).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
 func (self *S256Field) Mul(other FieldInteger) FieldInteger {
 	o := other.(*S256Field)
-	var num *big.Int
+	var num = new(big.Int)
 	num.Set(self.Num).Mul(num, o.Num).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
@@ -80,7 +73,9 @@ func (self *S256Field) Div(other FieldInteger) FieldInteger {
 }
 
 func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
-	var num, m, n *big.Int
+	var num = new(big.Int)
+	var n = new(big.Int)
+	var m = new(big.Int)
 	m.Set(self.Prime).Sub(m, big.NewInt(1))
 	n.Set(exponent).Add(n, self.Prime).Mod(n, m)
 	num.Set(self.Num).Exp(num, n, self.Prime)
