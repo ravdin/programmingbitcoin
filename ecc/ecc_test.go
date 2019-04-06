@@ -72,7 +72,6 @@ func TestECC(t *testing.T) {
 			{2, 47, 71, 36, 111},
 			{4, 47, 71, 194, 51},
 			{8, 47, 71, 116, 55},
-			//{21, 47, 71, 116, 55},
 		}
 		for _, item := range multiplications {
 			p1, _ := NewPoint(item[1], item[2], a, b, f223)
@@ -82,5 +81,12 @@ func TestECC(t *testing.T) {
 				t.Errorf("Expected %v, got %v", expected, actual)
 			}
 		}
+    // Test for infinity case.
+    p1, _ := NewPoint(int64(47), int64(71), a, b, f223)
+    actual := p1.Rmul(big.NewInt(21))
+    expected, _ := NewPoint(nil, nil, a, b,f223)
+    if !actual.Eq(expected) {
+      t.Errorf("Expected %v, got %v", expected, actual)
+    }
 	})
 }

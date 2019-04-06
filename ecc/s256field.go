@@ -27,13 +27,15 @@ func (self *S256Field) String() string {
 }
 
 func (self *S256Field) Eq(other FieldInteger) bool {
+	if other == nil {
+		return false
+	}
 	o := other.(*S256Field)
 	return self.Num.Cmp(o.Num) == 0 && self.Prime.Cmp(o.Prime) == 0
 }
 
 func (self *S256Field) Ne(other FieldInteger) bool {
-	o := other.(*S256Field)
-	return self.Num.Cmp(o.Num) != 0 || self.Prime.Cmp(o.Prime) != 0
+	return !self.Eq(other)
 }
 
 func (self *S256Field) Add(other FieldInteger) FieldInteger {
