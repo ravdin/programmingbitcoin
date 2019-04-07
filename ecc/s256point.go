@@ -1,8 +1,8 @@
 package ecc
 
 import (
-  "fmt"
-  "math/big"
+	"fmt"
+	"math/big"
 )
 
 var G *S256Point
@@ -30,8 +30,8 @@ func init() {
 }
 
 type S256Point struct {
-  X *S256Field
-  Y *S256Field
+	X *S256Field
+	Y *S256Field
 }
 
 func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
@@ -40,26 +40,26 @@ func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
 	}
 	p, err := NewPoint(x, y, A, B, withBigInt)
 	if err != nil {
-    return nil, err
-  }
-  return &S256Point{X: p.X.(*S256Field), Y: p.Y.(*S256Field)}, nil
+		return nil, err
+	}
+	return &S256Point{X: p.X.(*S256Field), Y: p.Y.(*S256Field)}, nil
 }
 
 func (self *S256Point) Point() *Point {
-  var s256FieldConverter = func(num interface{}) FieldInteger {
-    switch num.(type) {
-    case *big.Int:
-      return NewS256Field(num.(*big.Int), P)
-    case *S256Field:
-      return num.(*S256Field)
-    default:
-      panic("Unsupported type!")
-    }
-  }
-  if result, err := NewPoint(self.X, self.Y, A, B, s256FieldConverter); err == nil {
-    return result
-  }
-  panic ("Error casting to Point!")
+	var s256FieldConverter = func(num interface{}) FieldInteger {
+		switch num.(type) {
+		case *big.Int:
+			return NewS256Field(num.(*big.Int), P)
+		case *S256Field:
+			return num.(*S256Field)
+		default:
+			panic("Unsupported type!")
+		}
+	}
+	if result, err := NewPoint(self.X, self.Y, A, B, s256FieldConverter); err == nil {
+		return result
+	}
+	panic("Error casting to Point!")
 }
 
 func (self *S256Point) String() string {
@@ -70,30 +70,30 @@ func (self *S256Point) String() string {
 	}
 }
 
-func (self *S256Point) Eq (other *S256Point) bool {
-  if self.X == nil {
-    return other.X == nil
-  }
-  return self.X.Eq(other.X) && self.Y.Eq(other.Y)
+func (self *S256Point) Eq(other *S256Point) bool {
+	if self.X == nil {
+		return other.X == nil
+	}
+	return self.X.Eq(other.X) && self.Y.Eq(other.Y)
 }
 
-func (self *S256Point) Ne (other *S256Point) bool {
-  return !self.Eq(other)
+func (self *S256Point) Ne(other *S256Point) bool {
+	return !self.Eq(other)
 }
 
 func (self *S256Point) Add(other *S256Point) *S256Point {
-  p1 := self.Point()
-  p2 := other.Point()
-  result := p1.Add(p2)
-  return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+	p1 := self.Point()
+	p2 := other.Point()
+	result := p1.Add(p2)
+	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
 }
 
 func (self *S256Point) Rmul(coefficient *big.Int) *S256Point {
-  var coef *big.Int = new(big.Int)
-  coef.Mod(coefficient, N)
-  result := self.Point().Rmul(coef)
-  if result.X == nil && result.Y == nil {
-    return &S256Point{X: nil, Y: nil}
-  }
-  return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+	var coef *big.Int = new(big.Int)
+	coef.Mod(coefficient, N)
+	result := self.Point().Rmul(coef)
+	if result.X == nil && result.Y == nil {
+		return &S256Point{X: nil, Y: nil}
+	}
+	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
 }
