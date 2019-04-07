@@ -5,7 +5,7 @@ import (
 	"math/big"
 )
 
-func hexStringToBigInt(str string) *big.Int {
+func hexStringToBytes(str string) []byte {
 	if len(str)&1 == 1 {
 		str = "0" + str
 	}
@@ -15,7 +15,11 @@ func hexStringToBigInt(str string) *big.Int {
 	if err != nil {
 		panic(err)
 	}
+	return dst
+}
+
+func hexStringToBigInt(str string) *big.Int {
 	result := new(big.Int)
-	result.SetBytes(dst)
+	result.SetBytes(hexStringToBytes(str))
 	return result
 }

@@ -110,3 +110,25 @@ func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
 	total = total.Add(self.Rmul(v))
 	return total.X.Num.Cmp(sig.R) == 0
 }
+
+func (self *S256Point) Sec(compressed bool) []byte {
+	// returns the binary version of the SEC format
+	x := self.X.Num.Bytes()
+	y := self.Y.Num.Bytes()
+	var result []byte
+	if compressed {
+		result = make([]byte, 33)
+		copy(result[33-len(x):], x)
+		if self.Y.Num.Bit(0) == 0 {
+			result[0] = 2
+		} else {
+			result[0] = 3
+		}
+	} else {
+		result = make([]byte, 65)
+		copy(result[65-len(y):], y)
+		copy(result[65-len(x)-len(y):], x)
+		result[0] = 4
+	}
+	return result
+}
