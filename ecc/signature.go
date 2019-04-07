@@ -56,8 +56,8 @@ func ParseSignature(signatureBin []byte) *Signature {
 	}
 	rlength, _ := reader.ReadByte()
 	var r *big.Int = new(big.Int)
-  buffer := make([]byte, rlength)
-  reader.Read(buffer)
+	buffer := make([]byte, rlength)
+	reader.Read(buffer)
 	r.SetBytes(buffer)
 	marker, _ = reader.ReadByte()
 	if marker != 0x02 {
@@ -65,7 +65,7 @@ func ParseSignature(signatureBin []byte) *Signature {
 	}
 	slength, _ := reader.ReadByte()
 	var s *big.Int = new(big.Int)
-  buffer = make([]byte, slength)
+	buffer = make([]byte, slength)
 	s.SetBytes(buffer)
 	if len(signatureBin) != 6+int(rlength+slength) {
 		panic("Signature too long")

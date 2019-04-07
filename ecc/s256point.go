@@ -14,19 +14,14 @@ var P *big.Int
 func init() {
 	A = big.NewInt(0)
 	B = big.NewInt(7)
-	N = new(big.Int)
-	N.SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
+	N = hexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
 
 	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
-	P = new(big.Int)
-	P.SetString("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f", 16)
+	P = hexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
 
-	Gx := "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-	Gy := "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
-	var x, y big.Int
-	x.SetString(Gx, 16)
-	y.SetString(Gy, 16)
-	G, _ = NewS256Point(&x, &y)
+	x := hexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
+	y := hexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
+	G, _ = NewS256Point(x, y)
 }
 
 type S256Point struct {
@@ -96,4 +91,22 @@ func (self *S256Point) Rmul(coefficient *big.Int) *S256Point {
 		return &S256Point{X: nil, Y: nil}
 	}
 	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+}
+
+func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
+	// By Fermat's Little Theorem, 1/s = pow(s, N-2, N)
+	s_inv := new(big.Int)
+	e := new(big.Int)
+	e.Sub(N, big.NewInt(2))
+	s_inv.Exp(sig.S, e, N)
+	// u = z / s
+	u := new(big.Int)
+	u.Mul(z, s_inv).Mod(u, N)
+	// v = r / s
+	v := new(big.Int)
+	v.Mul(sig.R, s_inv).Mod(v, N)
+	// u*G + v*P should have as the x coordinate, r
+	total := G.Rmul(u)
+	total = total.Add(self.Rmul(v))
+	return total.X.Num.Cmp(sig.R) == 0
 }
