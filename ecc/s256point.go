@@ -113,21 +113,21 @@ func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
 
 func (self *S256Point) Sec(compressed bool) []byte {
 	// returns the binary version of the SEC format
-	x := self.X.Num.Bytes()
-	y := self.Y.Num.Bytes()
+	x := intToBytes(self.X.Num, 32)
+	y := intToBytes(self.Y.Num, 32)
 	var result []byte
 	if compressed {
 		result = make([]byte, 33)
-		copy(result[33-len(x):], x)
-		if self.Y.Num.Bit(0) == 0 {
+		copy(result[1:], x)
+		if y[31]%2 == 0 {
 			result[0] = 2
 		} else {
 			result[0] = 3
 		}
 	} else {
 		result = make([]byte, 65)
-		copy(result[65-len(y):], y)
-		copy(result[65-len(x)-len(y):], x)
+		copy(result[1:], x)
+		copy(result[33:], y)
 		result[0] = 4
 	}
 	return result

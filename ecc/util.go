@@ -43,8 +43,7 @@ func encodeBase58(s string) string {
 	var b58 *big.Int = big.NewInt(58)
 	num.SetBytes(chars)
 	for num.Cmp(big.NewInt(0)) > 0 {
-		mod.Mod(num, b58)
-		num.Div(num, b58)
+		num.QuoRem(num, b58, mod)
 		encoded = append(encoded, int(mod.Int64()))
 	}
 	encoded = append(encoded, prefix...)
@@ -58,4 +57,11 @@ func encodeBase58(s string) string {
 
 func encodeBase58Checksum(b []byte) string {
 	return encodeBase58(string(append(b, hash256(b)[:4]...)))
+}
+
+func intToBytes(num *big.Int, size int) []byte {
+	var result []byte = make([]byte, size)
+	var raw = num.Bytes()
+	copy(result[size-len(raw):], raw)
+	return result
 }
