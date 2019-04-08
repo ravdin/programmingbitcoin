@@ -1,9 +1,9 @@
 package ecc
 
 import (
-	"testing"
-	"math/big"
 	"bytes"
+	"math/big"
+	"testing"
 )
 
 func TestS256Point(t *testing.T) {
@@ -67,11 +67,11 @@ func TestS256Point(t *testing.T) {
 			},
 			123: {
 				"04a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5204b5d6f84822c307e4b4a7140737aec23fc63b65b35f86a10026dbd2d864e6b",
-        "03a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5",
+				"03a598a8030da6d86c6bc7f2f5144ea549d28211ea58faa70ebf4c1e665c1fe9b5",
 			},
 			42424242: {
 				"04aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3",
-        "03aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e",
+				"03aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e",
 			},
 		}
 		for coefficient, sec := range tests {
@@ -87,5 +87,36 @@ func TestS256Point(t *testing.T) {
 		}
 	})
 
-	// TODO: test_address
+	t.Run("Test Address", func(t *testing.T) {
+		tests := map[int64][]string{
+			700227072: {
+				"148dY81A9BmdpMhvYEVznrM45kWN32vSCN",
+				"mieaqB68xDCtbUBYFoUNcmZNwk74xcBfTP",
+			},
+			321: {
+				"1S6g2xBJSED7Qr9CYZib5f4PYVhHZiVfj",
+				"mfx3y63A7TfTtXKkv7Y6QzsPFY6QCBCXiP",
+			},
+			4242424242: {
+				"1226JSptcStqn4Yq9aAmNXdwdc2ixuH9nb",
+				"mgY3bVusRUL6ZB2Ss999CSrGVbdRwVpM8s",
+			},
+		}
+		compressed := true
+		for secret, addresses := range tests {
+			point := G.Rmul(big.NewInt(secret))
+			mainnetExpected := addresses[0]
+			testnetExpected := addresses[1]
+			mainnetActual := point.Address(compressed, false)
+			testnetActual := point.Address(compressed, true)
+			if mainnetActual != mainnetExpected {
+				t.Errorf("mainnet address failed, expected '%v', got '%v'", mainnetExpected, mainnetActual)
+			}
+			if testnetActual != testnetExpected {
+				t.Errorf("testnet address failed, expected '%v', got '%v'", testnetExpected, testnetActual)
+			}
+			// The first test is compressed and the rest are uncompressed.
+			compressed = false
+		}
+	})
 }

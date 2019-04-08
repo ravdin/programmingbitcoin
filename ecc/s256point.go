@@ -132,3 +132,21 @@ func (self *S256Point) Sec(compressed bool) []byte {
 	}
 	return result
 }
+
+func (self *S256Point) Hash160(compressed bool) []byte {
+	return hash160(self.Sec(compressed))
+}
+
+func (self *S256Point) Address(compressed bool, testnet bool) string {
+	h160 := self.Hash160(compressed)
+	var prefix byte
+	if testnet {
+		prefix = 0x6f
+	} else {
+		prefix = 0
+	}
+	h160 = append(h160, 0)
+	copy(h160[1:], h160)
+	h160[0] = prefix
+	return encodeBase58Checksum(h160)
+}
