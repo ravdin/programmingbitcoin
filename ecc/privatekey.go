@@ -1,9 +1,11 @@
 package ecc
 
 import (
-	//"fmt"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 )
 
@@ -14,6 +16,10 @@ type PrivateKey struct {
 
 func NewPrivateKey(secret *big.Int) *PrivateKey {
 	return &PrivateKey{secret: secret, point: G.Rmul(secret)}
+}
+
+func Hex(self *PrivateKey) string {
+	return fmt.Sprintf("%s", hex.EncodeToString(self.secret.Bytes()))
 }
 
 func (self *PrivateKey) Sign(z *big.Int) *Signature {
@@ -43,7 +49,7 @@ func (self *PrivateKey) Sign(z *big.Int) *Signature {
 
 func (self *PrivateKey) Wif(compressed bool, testnet bool) string {
 	var secretBytes = make([]byte, 33)
-	copy(secretBytes[1:], intToBytes(self.secret, 32))
+	copy(secretBytes[1:], util.IntToBytes(self.secret, 32))
 	if testnet {
 		secretBytes[0] = 0xef
 	} else {
@@ -52,7 +58,7 @@ func (self *PrivateKey) Wif(compressed bool, testnet bool) string {
 	if compressed {
 		secretBytes = append(secretBytes, 1)
 	}
-	return encodeBase58Checksum(secretBytes)
+	return util.EncodeBase58Checksum(secretBytes)
 }
 
 func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
@@ -67,8 +73,8 @@ func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
 	if ztmp.Cmp(N) > 0 {
 		ztmp.Sub(ztmp, N)
 	}
-	zBytes := intToBytes(ztmp, 32)
-	secretBytes := intToBytes(self.secret, 32)
+	zBytes := util.IntToBytes(ztmp, 32)
+	secretBytes := util.IntToBytes(self.secret, 32)
 	mac := hmac.New(sha256.New, k)
 	mac.Write(v)
 	mac.Write([]byte{0})

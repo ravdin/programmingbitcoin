@@ -1,4 +1,4 @@
-package ecc
+package util
 
 import (
 	"crypto/sha256"
@@ -13,11 +13,11 @@ func calcHash(buf []byte, hasher hash.Hash) []byte {
 }
 
 // sha256 followed by ripemd160
-func hash160(buf []byte) []byte {
+func Hash160(buf []byte) []byte {
 	return calcHash(calcHash(buf, sha256.New()), ripemd160.New())
 }
 
 // Two rounds of sha256
-func hash256(buf []byte) []byte {
+func Hash256(buf []byte) []byte {
 	return calcHash(calcHash(buf, sha256.New()), sha256.New())
 }

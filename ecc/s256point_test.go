@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"bytes"
+	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 	"testing"
 )
@@ -22,9 +23,9 @@ func TestS256Point(t *testing.T) {
 			{"1000000000000000000000000000000000000000000000000000080000000", "9577ff57c8234558f293df502ca4f09cbc65a6572c842b39b366f21717945116", "10b49c67fa9365ad7b90dab070be339a1daf9052373ec30ffae4f72d5e66d053"},
 		}
 		for _, item := range points {
-			secret := hexStringToBigInt(item[0])
-			x := hexStringToBigInt(item[1])
-			y := hexStringToBigInt(item[2])
+			secret := util.HexStringToBigInt(item[0])
+			x := util.HexStringToBigInt(item[1])
+			y := util.HexStringToBigInt(item[2])
 			expected, _ := NewS256Point(x, y)
 			actual := G.Rmul(secret)
 			if !actual.Eq(expected) {
@@ -34,8 +35,8 @@ func TestS256Point(t *testing.T) {
 	})
 
 	t.Run("Test Verify", func(t *testing.T) {
-		px := hexStringToBigInt("887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c")
-		py := hexStringToBigInt("61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34")
+		px := util.HexStringToBigInt("887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c")
+		py := util.HexStringToBigInt("61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34")
 		point, _ := NewS256Point(px, py)
 		tests := [][]string{
 			{
@@ -50,9 +51,9 @@ func TestS256Point(t *testing.T) {
 			},
 		}
 		for _, test := range tests {
-			z := hexStringToBigInt(test[0])
-			r := hexStringToBigInt(test[1])
-			s := hexStringToBigInt(test[2])
+			z := util.HexStringToBigInt(test[0])
+			r := util.HexStringToBigInt(test[1])
+			s := util.HexStringToBigInt(test[2])
 			if !point.Verify(z, NewSignature(r, s)) {
 				t.Errorf("Verify failed!")
 			}
@@ -78,10 +79,10 @@ func TestS256Point(t *testing.T) {
 			point := G.Rmul(big.NewInt(coefficient))
 			uncompressed := sec[0]
 			compressed := sec[1]
-			if !bytes.Equal(point.Sec(false), hexStringToBytes(uncompressed)) {
+			if !bytes.Equal(point.Sec(false), util.HexStringToBytes(uncompressed)) {
 				t.Errorf("Uncompressed SEC failed!")
 			}
-			if !bytes.Equal(point.Sec(true), hexStringToBytes(compressed)) {
+			if !bytes.Equal(point.Sec(true), util.HexStringToBytes(compressed)) {
 				t.Errorf("Uncompressed SEC failed!")
 			}
 		}

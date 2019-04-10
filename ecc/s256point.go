@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"fmt"
+	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 )
 
@@ -14,13 +15,13 @@ var P *big.Int
 func init() {
 	A = big.NewInt(0)
 	B = big.NewInt(7)
-	N = hexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+	N = util.HexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
 
 	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
-	P = hexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
+	P = util.HexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
 
-	x := hexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
-	y := hexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
+	x := util.HexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
+	y := util.HexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
 	G, _ = NewS256Point(x, y)
 }
 
@@ -113,8 +114,8 @@ func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
 
 func (self *S256Point) Sec(compressed bool) []byte {
 	// returns the binary version of the SEC format
-	x := intToBytes(self.X.Num, 32)
-	y := intToBytes(self.Y.Num, 32)
+	x := util.IntToBytes(self.X.Num, 32)
+	y := util.IntToBytes(self.Y.Num, 32)
 	var result []byte
 	if compressed {
 		result = make([]byte, 33)
@@ -134,7 +135,7 @@ func (self *S256Point) Sec(compressed bool) []byte {
 }
 
 func (self *S256Point) Hash160(compressed bool) []byte {
-	return hash160(self.Sec(compressed))
+	return util.Hash160(self.Sec(compressed))
 }
 
 func (self *S256Point) Address(compressed bool, testnet bool) string {
@@ -148,5 +149,5 @@ func (self *S256Point) Address(compressed bool, testnet bool) string {
 	h160 = append(h160, 0)
 	copy(h160[1:], h160)
 	h160[0] = prefix
-	return encodeBase58Checksum(h160)
+	return util.EncodeBase58Checksum(h160)
 }
