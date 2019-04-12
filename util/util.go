@@ -68,10 +68,10 @@ func IntToBytes(num *big.Int, size int) []byte {
 	return result
 }
 
-func ReadVarInt(r bytes.Reader) int64 {
+func ReadVarInt(r bytes.Reader) int {
 	b, _ := r.ReadByte()
 	var bufsize int
-	switch (b) {
+	switch b {
 	case 0xfd:
 		bufsize = 2
 		break
@@ -82,11 +82,11 @@ func ReadVarInt(r bytes.Reader) int64 {
 		bufsize = 8
 		break
 	default:
-		return int64(b)
+		return int(b)
 	}
 	var buffer []byte = make([]byte, bufsize)
 	r.Read(buffer)
-	return LittleEndianToInt64(buffer)
+	return int(LittleEndianToInt64(buffer))
 }
 
 func EncodeVarInt(i int) []byte {
@@ -112,9 +112,19 @@ func EncodeVarInt(i int) []byte {
 	return result
 }
 
+func LittleEndianToByte(b byte) byte {
+	var result byte
+	buf := bytes.NewReader([]byte{b})
+	err := binary.Read(buf, binary.LittleEndian, &result)
+	if err != nil {
+		panic(nil)
+	}
+	return result
+}
+
 func LittleEndianToInt16(b []byte) int16 {
 	if len(b) > 2 {
-		panic ("Value is too large!")
+		panic("Value is too large!")
 	}
 	var result int16
 	buf := bytes.NewReader(b)
@@ -127,7 +137,7 @@ func LittleEndianToInt16(b []byte) int16 {
 
 func LittleEndianToInt32(b []byte) int32 {
 	if len(b) > 4 {
-		panic ("Value is too large!")
+		panic("Value is too large!")
 	}
 	var result int32
 	buf := bytes.NewReader(b)
@@ -140,7 +150,7 @@ func LittleEndianToInt32(b []byte) int32 {
 
 func LittleEndianToInt64(b []byte) int64 {
 	if len(b) > 8 {
-		panic ("Value is too large!")
+		panic("Value is too large!")
 	}
 	var result int64
 	buf := bytes.NewReader(b)
