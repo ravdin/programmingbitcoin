@@ -11,7 +11,7 @@ type TxOut struct {
 	ScriptPubKey *script.Script
 }
 
-func ParseTxOut(s bytes.Reader) *TxOut {
+func ParseTxOut(s *bytes.Reader) *TxOut {
 	// amount is an integer in 8 bytes, little endian
 	// use Script.parse to get the ScriptPubKey
 	// return an instance of the class

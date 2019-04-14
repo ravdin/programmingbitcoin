@@ -13,7 +13,7 @@ type TxIn struct {
 	Sequence  int32
 }
 
-func ParseTxIn(s bytes.Reader) *TxIn {
+func ParseTxIn(s *bytes.Reader) *TxIn {
 	// prev_tx is 32 bytes, little endian
 	// prev_index is an integer in 4 bytes, little endian
 	// use Script.parse to get the ScriptSig

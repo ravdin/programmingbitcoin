@@ -68,7 +68,7 @@ func IntToBytes(num *big.Int, size int) []byte {
 	return result
 }
 
-func ReadVarInt(r bytes.Reader) int {
+func ReadVarInt(r *bytes.Reader) int {
 	b, _ := r.ReadByte()
 	var bufsize int
 	switch b {
@@ -159,6 +159,15 @@ func LittleEndianToInt64(b []byte) int64 {
 		panic(err)
 	}
 	return result
+}
+
+func ByteToLittleEndian(num byte) byte {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.LittleEndian, &num)
+	if err != nil {
+		panic(err)
+	}
+	return buf.Bytes()[0]
 }
 
 func Int16ToLittleEndian(num int16) []byte {
