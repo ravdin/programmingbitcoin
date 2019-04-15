@@ -6,10 +6,10 @@ import (
 )
 
 type Tx struct {
-	Version  int32
+	Version  uint32
 	TxIns    []*TxIn
 	TxOuts   []*TxOut
-	Locktime int32
+	Locktime uint32
 	Testnet  bool
 }
 
@@ -35,8 +35,23 @@ func ParseTx(s *bytes.Reader, testnet bool) *Tx {
 	for i := 0; i < num_outputs; i++ {
 		tx_outs[i] = ParseTxOut(s)
 	}
-	buffer = make([]byte, s.Len())
 	s.Read(buffer)
 	locktime := util.LittleEndianToInt32(buffer)
 	return &Tx{Version: version, TxIns: tx_ins, TxOuts: tx_outs, Locktime: locktime, Testnet: testnet}
+}
+
+func (self *Tx) Fee() uint64 {
+	//Returns the fee of this transaction in satoshi'
+	// initialize input sum and output sum
+	// use TxIn.value() to sum up the input amounts
+	// use TxOut.amount to sum up the output amounts
+	// fee is input sum - output sum
+	var result uint64 = 0
+	for _, txIn := range self.TxIns {
+		result += txIn.Value(false)
+	}
+	for _, txOut := range self.TxOuts {
+		result -= txOut.Amount
+	}
+	return result
 }

@@ -6,9 +6,10 @@ import (
 )
 
 func TestLittleEndianToInt(t *testing.T) {
-	tests := map[int64]string{
+	tests := map[uint64]string{
 		10011545: "99c3980000000000",
 		32454049: "a135ef0100000000",
+		254:      "fe00",
 	}
 	for expected, h := range tests {
 		actual := LittleEndianToInt64(HexStringToBytes(h))

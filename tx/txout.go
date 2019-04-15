@@ -7,7 +7,7 @@ import (
 )
 
 type TxOut struct {
-	Amount       int64
+	Amount       uint64
 	ScriptPubKey *script.Script
 }
 
