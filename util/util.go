@@ -44,7 +44,7 @@ func encodeBase58(s string) string {
 	var mod *big.Int = new(big.Int)
 	var b58 *big.Int = big.NewInt(58)
 	num.SetBytes(chars)
-	for num.Cmp(big.NewInt(0)) > 0 {
+	for num.Sign() > 0 {
 		num.QuoRem(num, b58, mod)
 		encoded = append(encoded, int(mod.Int64()))
 	}

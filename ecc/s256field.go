@@ -44,7 +44,7 @@ func (self *S256Field) Add(other FieldInteger) FieldInteger {
 		panic("Cannot add two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Set(self.Num).Add(num, o.Num).Mod(num, self.Prime)
+	num.Add(self.Num, o.Num).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
@@ -54,7 +54,10 @@ func (self *S256Field) Sub(other FieldInteger) FieldInteger {
 		panic("Cannot subtract two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Set(self.Num).Sub(num, o.Num).Mod(num, self.Prime)
+	num.Sub(self.Num, o.Num).Mod(num, self.Prime)
+	if num.Sign() < 0 {
+		num.Add(num, self.Prime)
+	}
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
@@ -64,7 +67,7 @@ func (self *S256Field) Mul(other FieldInteger) FieldInteger {
 		panic("Cannot multiply two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Set(self.Num).Mul(num, o.Num).Mod(num, self.Prime)
+	num.Mul(self.Num, o.Num).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
@@ -84,11 +87,9 @@ func (self *S256Field) Div(other FieldInteger) FieldInteger {
 	var num = new(big.Int)
 	var b = new(big.Int)
 	var e = new(big.Int)
-	num.Set(self.Num)
-	b.Set(o.Num)
-	e.Set(self.Prime).Sub(e, big.NewInt(2))
-	b.Exp(b, e, self.Prime)
-	num.Mul(num, b).Mod(num, self.Prime)
+	e.Sub(self.Prime, big.NewInt(2))
+	b.Exp(o.Num, e, self.Prime)
+	num.Mul(self.Num, b).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
@@ -96,8 +97,8 @@ func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
 	var num = new(big.Int)
 	var n = new(big.Int)
 	var m = new(big.Int)
-	m.Set(self.Prime).Sub(m, big.NewInt(1))
-	n.Set(exponent).Mod(exponent, m)
+	m.Sub(self.Prime, big.NewInt(1))
+	n.Mod(exponent, m)
 	num.Set(self.Num).Exp(num, n, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
@@ -106,13 +107,13 @@ func (self *S256Field) Rmul(coeff *big.Int) FieldInteger {
 	var num = new(big.Int)
 	var c = new(big.Int)
 	c.Mod(coeff, self.Prime)
-	num.Set(self.Num).Mul(num, c).Mod(num, self.Prime)
+	num.Mul(self.Num, c).Mod(num, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
-func (self *S256Field) Sqrt() FieldInteger {
+func (self *S256Field) Sqrt() *S256Field {
 	var e *big.Int = new(big.Int)
 	e.Add(self.Prime, big.NewInt(1))
 	e.Div(e, big.NewInt(4))
-	return self.Pow(e)
+	return self.Pow(e).(*S256Field)
 }

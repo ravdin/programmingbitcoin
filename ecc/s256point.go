@@ -41,6 +41,40 @@ func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
 	return &S256Point{X: p.X.(*S256Field), Y: p.Y.(*S256Field)}, nil
 }
 
+// returns a Point object from a SEC binary (not hex)
+func ParseS256Point(secBin []byte) *S256Point {
+	if secBin[0] == 4 {
+		var x, y *big.Int = new(big.Int), new(big.Int)
+		x.SetBytes(secBin[1:33])
+		y.SetBytes(secBin[33:65])
+		result, _ := NewS256Point(x, y)
+		return result
+	}
+	isEven := secBin[0] == 2
+	var xval *big.Int = new(big.Int)
+	xval.SetBytes(secBin[1:])
+	x := NewS256Field(xval, P)
+  // right side of the equation y^2 = x^3 + 7
+	alpha := x.Pow(big.NewInt(3)).Add(NewS256Field(B, P)).(*S256Field)
+  // solve for left side
+	beta := alpha.Sqrt()
+	var even_beta, odd_beta *S256Field
+	var betaOffset *big.Int = new(big.Int)
+	betaOffset.Sub(P, beta.Num)
+	if beta.Num.Bit(0) == 0 {
+		even_beta = beta
+		odd_beta = NewS256Field(betaOffset, P)
+	} else {
+		even_beta = NewS256Field(betaOffset, P)
+		odd_beta = beta
+	}
+	if isEven {
+		return &S256Point{X: x, Y: even_beta}
+	} else {
+		return &S256Point{X: x, Y: odd_beta}
+	}
+}
+
 func (self *S256Point) Point() *Point {
 	var s256FieldConverter = func(num interface{}) FieldInteger {
 		switch num.(type) {
@@ -51,6 +85,9 @@ func (self *S256Point) Point() *Point {
 		default:
 			panic("Unsupported type!")
 		}
+	}
+	if self.X == nil && self.Y == nil {
+		return &Point{X: nil, Y: nil, A: s256FieldConverter(A), B: s256FieldConverter(B)}
 	}
 	if result, err := NewPoint(self.X, self.Y, A, B, s256FieldConverter); err == nil {
 		return result
@@ -81,6 +118,9 @@ func (self *S256Point) Add(other *S256Point) *S256Point {
 	p1 := self.Point()
 	p2 := other.Point()
 	result := p1.Add(p2)
+	if result.X == nil && result.Y == nil {
+		return &S256Point{X: nil, Y: nil}
+	}
 	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
 }
 

@@ -16,11 +16,11 @@ type Point struct {
 func NewPoint(x_arg interface{}, y_arg interface{}, a_arg interface{}, b_arg interface{}, option FieldIntegerConverter) (*Point, error) {
 	a := option(a_arg)
 	b := option(b_arg)
-	if x_arg == nil && y_arg == nil {
-		return &Point{X: nil, Y: nil, A: a, B: b}, nil
-	}
 	x := option(x_arg)
 	y := option(y_arg)
+	if x == nil && y == nil {
+		return &Point{X: nil, Y: nil, A: a, B: b}, nil
+	}
 	if !y.Pow(big.NewInt(2)).Eq(x.Pow(big.NewInt(3)).Add(x.Mul(a)).Add(b)) {
 		return nil, errors.New(fmt.Sprintf("(%d, %d) is not on the curve", x, y))
 	}
@@ -101,13 +101,11 @@ func (self *Point) Add(other *Point) *Point {
 
 func (self *Point) Rmul(coefficient *big.Int) *Point {
 	var coef *big.Int = new(big.Int)
-	var z *big.Int = new(big.Int)
 	coef.Set(coefficient)
 	var current *Point = &Point{X: self.X, Y: self.Y, A: self.A, B: self.B}
 	var result *Point = &Point{X: nil, Y: nil, A: self.A, B: self.B}
 	for coef.Cmp(big.NewInt(0)) != 0 {
-		z.And(coef, big.NewInt(1))
-		if z.Cmp(big.NewInt(1)) == 0 {
+		if coef.Bit(0) == 1 {
 			result = result.Add(current)
 		}
 		current = current.Add(current)

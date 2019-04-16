@@ -16,7 +16,7 @@ func NewSignature(r *big.Int, s *big.Int) *Signature {
 }
 
 func (sig *Signature) String() string {
-	return fmt.Sprintf("Signature(%v,%v)", sig.R, sig.S)
+	return fmt.Sprintf("Signature(%x,%x)", sig.R, sig.S)
 }
 
 func (sig *Signature) Der() []byte {
@@ -66,6 +66,7 @@ func ParseSignature(signatureBin []byte) *Signature {
 	slength, _ := reader.ReadByte()
 	var s *big.Int = new(big.Int)
 	buffer = make([]byte, slength)
+	reader.Read(buffer)
 	s.SetBytes(buffer)
 	if len(signatureBin) != 6+int(rlength+slength) {
 		panic("Signature too long")
