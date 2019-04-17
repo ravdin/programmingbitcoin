@@ -2,7 +2,10 @@ package tx
 
 import (
 	"bytes"
+	"encoding/hex"
+	"github.com/ravdin/programmingbitcoin/ecc"
 	"github.com/ravdin/programmingbitcoin/util"
+	"math/big"
 )
 
 type Tx struct {
@@ -11,6 +14,27 @@ type Tx struct {
 	TxOuts   []*TxOut
 	Locktime uint32
 	Testnet  bool
+}
+
+// Human-readable hexadecimal of the transaction hash
+func (self *Tx) Id() string {
+	return hex.EncodeToString(self.Hash())
+}
+
+// Binary hash of the legacy serialization
+func (self *Tx) Hash() []byte {
+	serialized := self.Serialize()
+	// reverse the array
+	length := len(serialized)
+	for i := 0; i < length/2; i++ {
+		serialized[i], serialized[length-i-1] = serialized[length-i-1], serialized[i]
+	}
+	return util.Hash256(serialized)
+}
+
+// Returns the byte serialization of the transaction
+func (self *Tx) Serialize() []byte {
+	panic("Not implemented")
 }
 
 func ParseTx(s *bytes.Reader, testnet bool) *Tx {
@@ -54,4 +78,24 @@ func (self *Tx) Fee() uint64 {
 		result -= txOut.Amount
 	}
 	return result
+}
+
+// Returns the integer representation of the hash that needs to get
+// signed for index inputIndex
+func (self *Tx) SigHash(inputIndex int) *big.Int {
+	panic("Not implemented")
+}
+
+// Returns whether the input has a valid signature
+func (self *Tx) verifyInput(inputIndex int) bool {
+	panic("Not implemented")
+}
+
+// Verify this transaction
+func (self *Tx) Verify() bool {
+	panic("Not implemented")
+}
+
+func (self *Tx) SignInput(inputIndex int, pk *ecc.PrivateKey) bool {
+	panic("Not implemented")
 }

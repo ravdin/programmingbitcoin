@@ -90,4 +90,27 @@ func TestTx(t *testing.T) {
 			t.Errorf("Expected %v, got %v", expected, testTx2.Fee())
 		}
 	})
+
+	t.Run("Test sig hash", func(t *testing.T) {
+		tx := fetcher.fetch("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03", false, false)
+		expected := util.HexStringToBigInt("27e0c5994dec7824e56dec6b2fcb342eb7cdb0d0957c2fce9882f715e85d81a6")
+		actual := tx.SigHash(0)
+		if actual.Cmp(expected) != 0 {
+			t.Errorf("Expected %x, got %x", expected, actual)
+		}
+	})
+
+	t.Run("Test Verify p2pkh", func(t *testing.T) {
+		txIds := []string{
+			"452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03",
+			"5418099cc755cb9dd3ebc6cf1a7888ad53a1a3beb5a025bce89eb1bf7f1650a2",
+		}
+		for i, txId := range txIds {
+			testnet := i == 1
+			tx := fetcher.fetch(txId, testnet, false)
+			if !tx.Verify() {
+				t.Errorf("Verify failed!")
+			}
+		}
+	})
 }

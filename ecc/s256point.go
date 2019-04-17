@@ -54,9 +54,9 @@ func ParseS256Point(secBin []byte) *S256Point {
 	var xval *big.Int = new(big.Int)
 	xval.SetBytes(secBin[1:])
 	x := NewS256Field(xval, P)
-  // right side of the equation y^2 = x^3 + 7
+	// right side of the equation y^2 = x^3 + 7
 	alpha := x.Pow(big.NewInt(3)).Add(NewS256Field(B, P)).(*S256Field)
-  // solve for left side
+	// solve for left side
 	beta := alpha.Sqrt()
 	var even_beta, odd_beta *S256Field
 	var betaOffset *big.Int = new(big.Int)

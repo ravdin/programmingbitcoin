@@ -16,11 +16,11 @@ type Point struct {
 func NewPoint(x_arg interface{}, y_arg interface{}, a_arg interface{}, b_arg interface{}, option FieldIntegerConverter) (*Point, error) {
 	a := option(a_arg)
 	b := option(b_arg)
-	x := option(x_arg)
-	y := option(y_arg)
-	if x == nil && y == nil {
+	if x_arg == nil && y_arg == nil {
 		return &Point{X: nil, Y: nil, A: a, B: b}, nil
 	}
+	x := option(x_arg)
+	y := option(y_arg)
 	if !y.Pow(big.NewInt(2)).Eq(x.Pow(big.NewInt(3)).Add(x.Mul(a)).Add(b)) {
 		return nil, errors.New(fmt.Sprintf("(%d, %d) is not on the curve", x, y))
 	}
