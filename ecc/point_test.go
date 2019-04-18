@@ -1,21 +1,14 @@
 package ecc
 
 import (
+	"math/big"
 	"testing"
 )
 
-func withIntWrapper() FieldIntegerConverter {
-	return func(n interface{}) FieldInteger {
-		return newIntWrapper(n.(int))
-	}
-}
-
 func TestPoint(t *testing.T) {
-	option := withIntWrapper()
-
 	t.Run("TestNe", func(t *testing.T) {
-		a, _ := NewPoint(3, -7, 5, 7, option)
-		b, _ := NewPoint(18, 77, 5, 7, option)
+		a, _ := newPointFromInts(3, -7, 5, 7)
+		b, _ := newPointFromInts(18, 77, 5, 7)
 		if a.Eq(b) {
 			t.Errorf("Expected a != b")
 		}
@@ -25,30 +18,30 @@ func TestPoint(t *testing.T) {
 	})
 
 	t.Run("TestOnCurve", func(t *testing.T) {
-		_, err := NewPoint(2, 4, 5, 7, option)
+		_, err := newPointFromInts(2, 4, 5, 7)
 		if err == nil {
 			t.Errorf("Point is not on curve, expected error!")
 		}
 		// These should not raise an error
-		p1, err := NewPoint(3, -7, 5, 7, option)
+		p1, err := newPointFromInts(3, -7, 5, 7)
 		if p1 == nil || err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		p2, err := NewPoint(18, 77, 5, 7, option)
+		p2, err := newPointFromInts(18, 77, 5, 7)
 		if p2 == nil || err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 
 	t.Run("TestAdd", func(t *testing.T) {
-		a, _ := NewPoint(nil, nil, 5, 7, option)
-		b, _ := NewPoint(2, 5, 5, 7, option)
-		c, _ := NewPoint(2, -5, 5, 7, option)
-		d, _ := NewPoint(3, 7, 5, 7, option)
-		e, _ := NewPoint(-1, -1, 5, 7, option)
-		f, _ := NewPoint(2, -5, 5, 7, option)
-		g, _ := NewPoint(-1, 1, 5, 7, option)
-		h, _ := NewPoint(18, -77, 5, 7, option)
+		a, _ := newPointAtInfinity(5, 7)
+		b, _ := newPointFromInts(2, 5, 5, 7)
+		c, _ := newPointFromInts(2, -5, 5, 7)
+		d, _ := newPointFromInts(3, 7, 5, 7)
+		e, _ := newPointFromInts(-1, -1, 5, 7)
+		f, _ := newPointFromInts(2, -5, 5, 7)
+		g, _ := newPointFromInts(-1, 1, 5, 7)
+		h, _ := newPointFromInts(18, -77, 5, 7)
 		tests := [][]*Point{
 			{
 				a.Add(b), b,
@@ -74,4 +67,61 @@ func TestPoint(t *testing.T) {
 			}
 		}
 	})
+}
+
+// Int wrapper for testing.
+type intWrapper struct {
+	n int64
+}
+
+func newIntWrapper(n int64) *intWrapper {
+	return &intWrapper{n: n}
+}
+
+func newPointFromInts(x int64, y int64, a int64, b int64) (*Point, error) {
+	return NewPoint(newIntWrapper(x), newIntWrapper(y), newIntWrapper(a), newIntWrapper(b))
+}
+
+func newPointAtInfinity(a int64, b int64) (*Point, error) {
+	return NewPoint(nil, nil, newIntWrapper(a), newIntWrapper(b))
+}
+
+func (self *intWrapper) Eq(other FieldInteger) bool {
+	o := other.(*intWrapper)
+	return self.n == o.n
+}
+
+func (self *intWrapper) Ne(other FieldInteger) bool {
+	o := other.(*intWrapper)
+	return self.n != o.n
+}
+
+func (self *intWrapper) Add(other FieldInteger) FieldInteger {
+	o := other.(*intWrapper)
+	return newIntWrapper(self.n + o.n)
+}
+
+func (self *intWrapper) Sub(other FieldInteger) FieldInteger {
+	o := other.(*intWrapper)
+	return newIntWrapper(self.n - o.n)
+}
+
+func (self *intWrapper) Mul(other FieldInteger) FieldInteger {
+	o := other.(*intWrapper)
+	return newIntWrapper(self.n * o.n)
+}
+
+func (self *intWrapper) Div(other FieldInteger) FieldInteger {
+	o := other.(*intWrapper)
+	return newIntWrapper(self.n / o.n)
+}
+
+func (self *intWrapper) Pow(exponent *big.Int) FieldInteger {
+	result := new(big.Int)
+	result.Exp(big.NewInt(self.n), exponent, nil)
+	return newIntWrapper(result.Int64())
+}
+
+func (self *intWrapper) Rmul(coeff *big.Int) FieldInteger {
+	return newIntWrapper(coeff.Int64() * self.n)
 }

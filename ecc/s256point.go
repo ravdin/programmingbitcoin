@@ -6,19 +6,21 @@ import (
 	"math/big"
 )
 
-var G *S256Point
-var A *big.Int
-var B *big.Int
-var N *big.Int
-var P *big.Int
+var (
+	G *S256Point
+	A *S256Field
+	B *S256Field
+	N *big.Int
+	P *big.Int
+)
 
 func init() {
-	A = big.NewInt(0)
-	B = big.NewInt(7)
 	N = util.HexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
 
 	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
 	P = util.HexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
+	A = NewS256Field(big.NewInt(0), P)
+	B = NewS256Field(big.NewInt(7), P)
 
 	x := util.HexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
 	y := util.HexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
@@ -31,10 +33,7 @@ type S256Point struct {
 }
 
 func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
-	withBigInt := func(bigint interface{}) FieldInteger {
-		return NewS256Field(bigint.(*big.Int), P)
-	}
-	p, err := NewPoint(x, y, A, B, withBigInt)
+	p, err := NewPoint(NewS256Field(x, P), NewS256Field(y, P), A, B)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +54,7 @@ func ParseS256Point(secBin []byte) *S256Point {
 	xval.SetBytes(secBin[1:])
 	x := NewS256Field(xval, P)
 	// right side of the equation y^2 = x^3 + 7
-	alpha := x.Pow(big.NewInt(3)).Add(NewS256Field(B, P)).(*S256Field)
+	alpha := x.Pow(big.NewInt(3)).Add(B).(*S256Field)
 	// solve for left side
 	beta := alpha.Sqrt()
 	var even_beta, odd_beta *S256Field
@@ -76,20 +75,7 @@ func ParseS256Point(secBin []byte) *S256Point {
 }
 
 func (self *S256Point) Point() *Point {
-	var s256FieldConverter = func(num interface{}) FieldInteger {
-		switch num.(type) {
-		case *big.Int:
-			return NewS256Field(num.(*big.Int), P)
-		case *S256Field:
-			return num.(*S256Field)
-		default:
-			panic("Unsupported type!")
-		}
-	}
-	if self.X == nil && self.Y == nil {
-		return &Point{X: nil, Y: nil, A: s256FieldConverter(A), B: s256FieldConverter(B)}
-	}
-	if result, err := NewPoint(self.X, self.Y, A, B, s256FieldConverter); err == nil {
+	if result, err := NewPoint(self.X, self.Y, A, B); err == nil {
 		return result
 	}
 	panic("Error casting to Point!")

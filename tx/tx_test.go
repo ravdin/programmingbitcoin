@@ -3,7 +3,9 @@ package tx
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/ravdin/programmingbitcoin/ecc"
 	"github.com/ravdin/programmingbitcoin/util"
+	"math/big"
 	"testing"
 )
 
@@ -111,6 +113,28 @@ func TestTx(t *testing.T) {
 			if !tx.Verify() {
 				t.Errorf("Verify failed!")
 			}
+		}
+	})
+
+	t.Run("Test Verify p2sh", func(t *testing.T) {
+		tx := fetcher.fetch("46df1a9484d0a81d03ce0ee543ab6e1a23ed06175c104a178268fad381216c2b", false, false)
+		if !tx.Verify() {
+			t.Errorf("Verify failed!")
+		}
+	})
+
+	t.Run("Test private key", func(t *testing.T) {
+		pk := ecc.NewPrivateKey(big.NewInt(8675309))
+		data := util.HexStringToBytes("010000000199a24308080ab26e6fb65c4eccfadf76749bb5bfa8cb08f291320b3c21e56f0d0d00000000ffffffff02408af701000000001976a914d52ad7ca9b3d096a38e752c2018e6fbc40cdf26f88ac80969800000000001976a914507b27411ccf7f16f10297de6cef3f291623eddf88ac00000000")
+		reader := bytes.NewReader(data)
+		tx_obj := ParseTx(reader, true)
+		if !tx_obj.SignInput(0, pk) {
+			t.Errorf("Private key sign failed!")
+		}
+		expected := `010000000199a24308080ab26e6fb65c4eccfadf76749bb5bfa8cb08f291320b3c21e56f0d0d0000006b4830450221008ed46aa2cf12d6d81065bfabe903670165b538f65ee9a3385e6327d80c66d3b502203124f804410527497329ec4715e18558082d489b218677bd029e7fa306a72236012103935581e52c354cd2f484fe8ed83af7a3097005b2f9c60bff71d35bd795f54b67ffffffff02408af701000000001976a914d52ad7ca9b3d096a38e752c2018e6fbc40cdf26f88ac80969800000000001976a914507b27411ccf7f16f10297de6cef3f291623eddf88ac00000000`
+		actual := hex.EncodeToString(tx_obj.Serialize())
+		if actual != expected {
+			t.Errorf("Expected %v, got %v", expected, actual)
 		}
 	})
 }

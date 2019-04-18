@@ -6,11 +6,14 @@ import (
 )
 
 func TestECC(t *testing.T) {
-	var a int64 = 0
-	var b int64 = 7
 	var prime int64 = 223
-	f223 := func(n interface{}) FieldInteger {
-		return NewS256FieldFromInt64(n.(int64), prime)
+	f223 := func(n int64) FieldInteger {
+		return NewS256FieldFromInt64(n, prime)
+	}
+	a := f223(0)
+	b := f223(7)
+	newf223Point := func(x int64, y int64) (*Point, error) {
+		return NewPoint(f223(x), f223(y), a, b)
 	}
 
 	t.Run("Test on curve", func(t *testing.T) {
@@ -24,13 +27,13 @@ func TestECC(t *testing.T) {
 			{200, 119}, {42, 99},
 		}
 		for _, item := range validPoints {
-			p, err := NewPoint(item[0], item[1], a, b, f223)
+			p, err := newf223Point(item[0], item[1])
 			if p == nil || err != nil {
 				t.Errorf("Unexpected error %v!", err)
 			}
 		}
 		for _, item := range invalidPoints {
-			p, err := NewPoint(item[0], item[1], a, b, f223)
+			p, err := newf223Point(item[0], item[1])
 			if p != nil || err == nil {
 				t.Errorf("Point %v is invalid!", p)
 			}
@@ -48,9 +51,9 @@ func TestECC(t *testing.T) {
 			{143, 98, 76, 66, 47, 71},
 		}
 		for _, item := range additions {
-			p1, _ := NewPoint(item[0], item[1], a, b, f223)
-			p2, _ := NewPoint(item[2], item[3], a, b, f223)
-			expected, _ := NewPoint(item[4], item[5], a, b, f223)
+			p1, _ := newf223Point(item[0], item[1])
+			p2, _ := newf223Point(item[2], item[3])
+			expected, _ := newf223Point(item[4], item[5])
 			actual := p1.Add(p2)
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
@@ -74,17 +77,17 @@ func TestECC(t *testing.T) {
 			{8, 47, 71, 116, 55},
 		}
 		for _, item := range multiplications {
-			p1, _ := NewPoint(item[1], item[2], a, b, f223)
-			actual, _ := NewPoint(item[3], item[4], a, b, f223)
+			p1, _ := newf223Point(item[1], item[2])
+			actual, _ := newf223Point(item[3], item[4])
 			expected := p1.Rmul(big.NewInt(item[0]))
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
 			}
 		}
 		// Test for infinity case.
-		p1, _ := NewPoint(int64(47), int64(71), a, b, f223)
+		p1, _ := newf223Point(47, 71)
 		actual := p1.Rmul(big.NewInt(21))
-		expected, _ := NewPoint(nil, nil, a, b, f223)
+		expected := &Point{nil, nil, a, b}
 		if !actual.Eq(expected) {
 			t.Errorf("Expected %v, got %v", expected, actual)
 		}

@@ -99,7 +99,7 @@ func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
 	var m = new(big.Int)
 	m.Sub(self.Prime, big.NewInt(1))
 	n.Mod(exponent, m)
-	num.Set(self.Num).Exp(num, n, self.Prime)
+	num.Exp(self.Num, n, self.Prime)
 	return &S256Field{Num: num, Prime: self.Prime}
 }
 
