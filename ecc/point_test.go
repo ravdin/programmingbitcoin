@@ -44,24 +44,25 @@ func TestPoint(t *testing.T) {
 		h, _ := newPointFromInts(18, -77, 5, 7)
 		tests := [][]*Point{
 			{
-				a.Add(b), b,
+				a, b, b,
 			},
 			{
-				b.Add(a), b,
+				b, a, b,
 			},
 			{
-				b.Add(c), a,
+				b, c, a,
 			},
 			{
-				d.Add(e), f,
+				d, e, f,
 			},
 			{
-				g.Add(g), h,
+				g, g, h,
 			},
 		}
 		for _, test := range tests {
-			actual := test[0]
-			expected := test[1]
+			p1, p2, expected := test[0], test[1], test[2]
+			actual := new(Point)
+			actual.Add(p1, p2)
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
 			}
@@ -96,32 +97,50 @@ func (self *intWrapper) Ne(other FieldInteger) bool {
 	return self.n != o.n
 }
 
-func (self *intWrapper) Add(other FieldInteger) FieldInteger {
-	o := other.(*intWrapper)
-	return newIntWrapper(self.n + o.n)
+func (z *intWrapper) Add(x, y FieldInteger) FieldInteger {
+	intx, inty := x.(*intWrapper), y.(*intWrapper)
+	*z = intWrapper{n: intx.n + inty.n}
+	return z
 }
 
-func (self *intWrapper) Sub(other FieldInteger) FieldInteger {
-	o := other.(*intWrapper)
-	return newIntWrapper(self.n - o.n)
+func (z *intWrapper) Sub(x, y FieldInteger) FieldInteger {
+	intx, inty := x.(*intWrapper), y.(*intWrapper)
+	*z = intWrapper{n: intx.n - inty.n}
+	return z
 }
 
-func (self *intWrapper) Mul(other FieldInteger) FieldInteger {
-	o := other.(*intWrapper)
-	return newIntWrapper(self.n * o.n)
+func (z *intWrapper) Mul(x, y FieldInteger) FieldInteger {
+	intx, inty := x.(*intWrapper), y.(*intWrapper)
+	*z = intWrapper{n: intx.n * inty.n}
+	return z
 }
 
-func (self *intWrapper) Div(other FieldInteger) FieldInteger {
-	o := other.(*intWrapper)
-	return newIntWrapper(self.n / o.n)
+func (z *intWrapper) Div(x, y FieldInteger) FieldInteger {
+	intx, inty := x.(*intWrapper), y.(*intWrapper)
+	*z = intWrapper{n: intx.n / inty.n}
+	return z
 }
 
-func (self *intWrapper) Pow(exponent *big.Int) FieldInteger {
+func (z *intWrapper) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
+	field := n.(*intWrapper)
 	result := new(big.Int)
-	result.Exp(big.NewInt(self.n), exponent, nil)
-	return newIntWrapper(result.Int64())
+	result.Exp(big.NewInt(field.n), exponent, nil)
+	*z = intWrapper{n: result.Int64()}
+	return z
 }
 
-func (self *intWrapper) Rmul(coeff *big.Int) FieldInteger {
-	return newIntWrapper(coeff.Int64() * self.n)
+func (z *intWrapper) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
+	field := n.(*intWrapper)
+	*z = intWrapper{n: coefficient.Int64() * field.n}
+	return z
+}
+
+func (z *intWrapper) Copy() FieldInteger {
+	return &intWrapper{n: z.n}
+}
+
+func (z *intWrapper) Set(n FieldInteger) FieldInteger {
+	field := n.(*intWrapper)
+	z.n = field.n
+	return z
 }

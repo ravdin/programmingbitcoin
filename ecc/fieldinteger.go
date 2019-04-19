@@ -5,14 +5,14 @@ import (
 )
 
 type FieldInteger interface {
-	Add(other FieldInteger) FieldInteger
-	Sub(other FieldInteger) FieldInteger
-	Mul(other FieldInteger) FieldInteger
-	Div(other FieldInteger) FieldInteger
-	Pow(exponent *big.Int) FieldInteger
-	Rmul(coeff *big.Int) FieldInteger
+	Add(x, y FieldInteger) FieldInteger
+	Sub(x, y FieldInteger) FieldInteger
+	Mul(x, y FieldInteger) FieldInteger
+	Div(x, y FieldInteger) FieldInteger
+	Pow(n FieldInteger, exponent *big.Int) FieldInteger
+	Cmul(n FieldInteger, coefficient *big.Int) FieldInteger
 	Eq(other FieldInteger) bool
 	Ne(other FieldInteger) bool
+	Copy() FieldInteger
+	Set(n FieldInteger) FieldInteger
 }
-
-type FieldIntegerConverter func(interface{}) FieldInteger

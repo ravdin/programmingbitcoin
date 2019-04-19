@@ -17,7 +17,11 @@ func NewPoint(x FieldInteger, y FieldInteger, a FieldInteger, b FieldInteger) (*
 	if x == nil && y == nil {
 		return &Point{X: nil, Y: nil, A: a, B: b}, nil
 	}
-	if !y.Pow(big.NewInt(2)).Eq(x.Pow(big.NewInt(3)).Add(x.Mul(a)).Add(b)) {
+	// Verify that y^2 = x^3 + ax + b
+	var left, right FieldInteger = y.Copy(), x.Copy()
+	left.Pow(left, big.NewInt(2))
+	right.Pow(right, big.NewInt(3)).Add(right, x.Copy().Mul(x, a)).Add(right, b)
+	if !left.Eq(right) {
 		return nil, errors.New(fmt.Sprintf("(%d, %d) is not on the curve", x, y))
 	}
 	return &Point{X: x, Y: y, A: a, B: b}, nil
@@ -45,67 +49,96 @@ func (self *Point) Ne(other *Point) bool {
 	return !self.Eq(other)
 }
 
-func (self *Point) Add(other *Point) *Point {
-	if self.A.Ne(other.A) || self.B.Ne(other.B) {
-		panic(fmt.Sprintf("Points %v, %v are not on the same curve", self, other))
+// Set z to p1 + p2 and return z.
+func (z *Point) Add(p1, p2 *Point) *Point {
+	if p1.A.Ne(p2.A) || p1.B.Ne(p2.B) {
+		panic(fmt.Sprintf("Points %v, %v are not on the same curve", p1, p2))
 	}
 
-	if self.X == nil {
-		return other
+	a, b := p1.A, p1.B
+	x1, y1, x2, y2 := p1.X, p1.Y, p2.X, p2.Y
+	two := big.NewInt(2)
+
+	if p1.X == nil {
+		*z = Point{X: p2.X, Y: p2.Y, A: a, B: b}
+		return z
 	}
 
-	if other.X == nil {
-		return self
+	if p2.X == nil {
+		*z = Point{X: p1.X, Y: p1.Y, A: a, B: b}
+		return z
 	}
 
-	// Case 1: self.x == other.x, self.y != other.y
+	// Case 1: p1.x == p2.x, p1.y != p2.y
 	// Result is point at infinity
-	if self.X.Eq(other.X) && self.Y.Ne(other.Y) {
-		return &Point{X: nil, Y: nil, A: self.A, B: self.B}
+	if p1.X.Eq(p2.X) && p1.Y.Ne(p2.Y) {
+		*z = Point{X: nil, Y: nil, A: a, B: b}
+		return z
 	}
 
-	// Case 2: self.x ≠ other.x
+	// Case 2: p1.x ≠ p2.x
 	// Formula (x3,y3)==(x1,y1)+(x2,y2)
 	// s=(y2-y1)/(x2-x1)
 	// x3=s**2-x1-x2
 	// y3=s*(x1-x3)-y1
-	if self.X.Ne(other.X) {
-		s := (other.Y.Sub(self.Y)).Div(other.X.Sub(self.X))
-		x := s.Pow(big.NewInt(2)).Sub(self.X).Sub(other.X)
-		y := s.Mul(self.X.Sub(x)).Sub(self.Y)
-		return &Point{X: x, Y: y, A: self.A, B: self.B}
+	if x1.Ne(x2) {
+		s := y2.Copy()
+		s.Sub(s, y1)
+		tmp := x2.Copy()
+		tmp.Sub(tmp, x1)
+		s.Div(s, tmp)
+		x3 := s.Copy()
+		x3.Pow(x3, two).Sub(x3, x1).Sub(x3, x2)
+		y3 := tmp.Sub(x1, x3)
+		y3.Mul(y3, s).Sub(y3, y1)
+		*z = Point{X: x3, Y: y3, A: a, B: b}
+		return z
 	}
 
 	// Case 4: if we are tangent to the vertical line,
 	// we return the point at infinity
 	// note instead of figuring out what 0 is for each type
 	// we just use 0 * self.x
-	if self.Eq(other) && self.Y.Eq(self.X.Rmul(big.NewInt(0))) {
-		return &Point{X: nil, Y: nil, A: self.A, B: self.B}
+	var zero FieldInteger = x1.Copy()
+	zero.Cmul(zero, big.NewInt(0))
+	if p1.Eq(p2) && p1.Y.Eq(zero) {
+		*z = Point{X: nil, Y: nil, A: a, B: b}
+		return z
 	}
 
-	// Case 3: self == other
+	// Case 3: p1 == p2
 	// Formula (x3,y3)=(x1,y1)+(x1,y1)
 	// s=(3*x1**2+a)/(2*y1)
 	// x3=s**2-2*x1
 	// y3=s*(x1-x3)-y1
-	s := self.X.Pow(big.NewInt(2)).Rmul(big.NewInt(3)).Add(self.A).Div(self.Y.Rmul(big.NewInt(2)))
-	x := s.Pow(big.NewInt(2)).Sub(self.X.Rmul(big.NewInt(2)))
-	y := s.Mul(self.X.Sub(x)).Sub(self.Y)
-	return &Point{X: x, Y: y, A: self.A, B: self.B}
+	s := x1.Copy()
+	s.Pow(s, two).Cmul(s, big.NewInt(3)).Add(s, a)
+	tmp := y1.Copy()
+	tmp.Cmul(tmp, two)
+	s.Div(s, tmp)
+	tmp.Cmul(x1, two)
+	x3 := s.Copy()
+	x3.Pow(x3, two).Sub(x3, tmp)
+	y3 := s.Copy()
+	tmp.Sub(x1, x3)
+	y3.Mul(s, tmp).Sub(y3, y1)
+	*z = Point{X: x3, Y: y3, A: a, B: b}
+	return z
 }
 
-func (self *Point) Rmul(coefficient *big.Int) *Point {
-	var coef *big.Int = new(big.Int)
+// Set z to c * p and return z.
+func (z *Point) Cmul(p *Point, coefficient *big.Int) *Point {
+	coef := new(big.Int)
 	coef.Set(coefficient)
-	var current *Point = &Point{X: self.X, Y: self.Y, A: self.A, B: self.B}
-	var result *Point = &Point{X: nil, Y: nil, A: self.A, B: self.B}
-	for coef.Cmp(big.NewInt(0)) != 0 {
+	current := &Point{X: p.X, Y: p.Y, A: p.A, B: p.B}
+	result := &Point{X: nil, Y: nil, A: p.A, B: p.B}
+	for coef.Sign() > 0 {
 		if coef.Bit(0) == 1 {
-			result = result.Add(current)
+			result.Add(result, current)
 		}
-		current = current.Add(current)
+		current.Add(current, current)
 		coef.Rsh(coef, 1)
 	}
-	return result
+	*z = *result
+	return z
 }

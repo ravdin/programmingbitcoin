@@ -54,7 +54,8 @@ func TestECC(t *testing.T) {
 			p1, _ := newf223Point(item[0], item[1])
 			p2, _ := newf223Point(item[2], item[3])
 			expected, _ := newf223Point(item[4], item[5])
-			actual := p1.Add(p2)
+			var actual = new(Point)
+			actual.Add(p1, p2)
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
 			}
@@ -79,14 +80,16 @@ func TestECC(t *testing.T) {
 		for _, item := range multiplications {
 			p1, _ := newf223Point(item[1], item[2])
 			actual, _ := newf223Point(item[3], item[4])
-			expected := p1.Rmul(big.NewInt(item[0]))
+			expected := new(Point)
+			expected.Cmul(p1, big.NewInt(item[0]))
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
 			}
 		}
 		// Test for infinity case.
 		p1, _ := newf223Point(47, 71)
-		actual := p1.Rmul(big.NewInt(21))
+		actual := new(Point)
+		actual.Cmul(p1, big.NewInt(21))
 		expected := &Point{nil, nil, a, b}
 		if !actual.Eq(expected) {
 			t.Errorf("Expected %v, got %v", expected, actual)

@@ -15,7 +15,7 @@ type PrivateKey struct {
 }
 
 func NewPrivateKey(secret *big.Int) *PrivateKey {
-	return &PrivateKey{secret: secret, point: G.Rmul(secret)}
+	return &PrivateKey{secret: secret, point: new(S256Point).Cmul(G, secret)}
 }
 
 func Hex(self *PrivateKey) string {
@@ -25,7 +25,7 @@ func Hex(self *PrivateKey) string {
 func (self *PrivateKey) Sign(z *big.Int) *Signature {
 	k := self.deterministicK(z)
 	// r is the x coordinate of the resulting point k*G
-	r := G.Rmul(k).X.Num
+	r := new(S256Point).Cmul(G, k).X.Num
 	// remember 1/k = pow(k, N-2, N)
 	e := new(big.Int)
 	e.Sub(N, big.NewInt(2))

@@ -16,7 +16,7 @@ func NewS256FieldFromInt64(num int64, prime int64) *S256Field {
 }
 
 func NewS256Field(num *big.Int, prime *big.Int) *S256Field {
-	if num.Cmp(big.NewInt(0)) < 0 || num.Cmp(prime) >= 0 {
+	if num.Sign() < 0 || num.Cmp(prime) >= 0 {
 		panic(fmt.Sprintf("Num %d not in valid field range", num))
 	}
 	return &S256Field{Num: num, Prime: prime}
@@ -38,42 +38,45 @@ func (self *S256Field) Ne(other FieldInteger) bool {
 	return !self.Eq(other)
 }
 
-func (self *S256Field) Add(other FieldInteger) FieldInteger {
-	o := other.(*S256Field)
-	if self.Prime.Cmp(o.Prime) != 0 {
+func (z *S256Field) Add(x, y FieldInteger) FieldInteger {
+	fx, fy := x.(*S256Field), y.(*S256Field)
+	if fx.Prime.Cmp(fy.Prime) != 0 {
 		panic("Cannot add two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Add(self.Num, o.Num).Mod(num, self.Prime)
-	return &S256Field{Num: num, Prime: self.Prime}
+	num.Add(fx.Num, fy.Num).Mod(num, fx.Prime)
+	*z = S256Field{Num: num, Prime: fx.Prime}
+	return z
 }
 
-func (self *S256Field) Sub(other FieldInteger) FieldInteger {
-	o := other.(*S256Field)
-	if self.Prime.Cmp(o.Prime) != 0 {
+func (z *S256Field) Sub(x, y FieldInteger) FieldInteger {
+	fx, fy := x.(*S256Field), y.(*S256Field)
+	if fx.Prime.Cmp(fy.Prime) != 0 {
 		panic("Cannot subtract two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Sub(self.Num, o.Num).Mod(num, self.Prime)
+	num.Sub(fx.Num, fy.Num).Mod(num, fx.Prime)
 	if num.Sign() < 0 {
-		num.Add(num, self.Prime)
+		num.Add(num, fx.Prime)
 	}
-	return &S256Field{Num: num, Prime: self.Prime}
+	*z = S256Field{Num: num, Prime: fx.Prime}
+	return z
 }
 
-func (self *S256Field) Mul(other FieldInteger) FieldInteger {
-	o := other.(*S256Field)
-	if self.Prime.Cmp(o.Prime) != 0 {
+func (z *S256Field) Mul(x, y FieldInteger) FieldInteger {
+	fx, fy := x.(*S256Field), y.(*S256Field)
+	if fx.Prime.Cmp(fy.Prime) != 0 {
 		panic("Cannot multiply two numbers in different Fields")
 	}
 	var num = new(big.Int)
-	num.Mul(self.Num, o.Num).Mod(num, self.Prime)
-	return &S256Field{Num: num, Prime: self.Prime}
+	num.Mul(fx.Num, fy.Num).Mod(num, fx.Prime)
+	*z = S256Field{Num: num, Prime: fx.Prime}
+	return z
 }
 
-func (self *S256Field) Div(other FieldInteger) FieldInteger {
-	o := other.(*S256Field)
-	if self.Prime.Cmp(o.Prime) != 0 {
+func (z *S256Field) Div(x, y FieldInteger) FieldInteger {
+	fx, fy := x.(*S256Field), y.(*S256Field)
+	if fx.Prime.Cmp(fy.Prime) != 0 {
 		panic("Cannot divide two numbers in different Fields")
 	}
 	/*
@@ -87,33 +90,52 @@ func (self *S256Field) Div(other FieldInteger) FieldInteger {
 	var num = new(big.Int)
 	var b = new(big.Int)
 	var e = new(big.Int)
-	e.Sub(self.Prime, big.NewInt(2))
-	b.Exp(o.Num, e, self.Prime)
-	num.Mul(self.Num, b).Mod(num, self.Prime)
-	return &S256Field{Num: num, Prime: self.Prime}
+	e.Sub(fx.Prime, big.NewInt(2))
+	b.Exp(fy.Num, e, fx.Prime)
+	num.Mul(fx.Num, b).Mod(num, fx.Prime)
+	*z = S256Field{Num: num, Prime: fx.Prime}
+	return z
 }
 
-func (self *S256Field) Pow(exponent *big.Int) FieldInteger {
+func (z *S256Field) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
+	field := n.(*S256Field)
 	var num = new(big.Int)
-	var n = new(big.Int)
+	var e = new(big.Int)
 	var m = new(big.Int)
-	m.Sub(self.Prime, big.NewInt(1))
-	n.Mod(exponent, m)
-	num.Exp(self.Num, n, self.Prime)
-	return &S256Field{Num: num, Prime: self.Prime}
+	m.Sub(field.Prime, big.NewInt(1))
+	e.Mod(exponent, m)
+	num.Exp(field.Num, e, field.Prime)
+	*z = S256Field{Num: num, Prime: field.Prime}
+	return z
 }
 
-func (self *S256Field) Rmul(coeff *big.Int) FieldInteger {
+func (z *S256Field) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
 	var num = new(big.Int)
 	var c = new(big.Int)
-	c.Mod(coeff, self.Prime)
-	num.Mul(self.Num, c).Mod(num, self.Prime)
-	return &S256Field{Num: num, Prime: self.Prime}
+	field := n.(*S256Field)
+	c.Mod(coefficient, field.Prime)
+	num.Mul(field.Num, c).Mod(num, field.Prime)
+	*z = S256Field{Num: num, Prime: field.Prime}
+	return z
+}
+
+func (z *S256Field) Copy() FieldInteger {
+	num := new(big.Int)
+	num.Set(z.Num)
+	return &S256Field{num, z.Prime}
+}
+
+func (z *S256Field) Set(n FieldInteger) FieldInteger {
+	field := n.(*S256Field)
+	z.Num.Set(field.Num)
+	z.Prime.Set(field.Prime)
+	return z
 }
 
 func (self *S256Field) Sqrt() *S256Field {
 	var e *big.Int = new(big.Int)
 	e.Add(self.Prime, big.NewInt(1))
 	e.Div(e, big.NewInt(4))
-	return self.Pow(e).(*S256Field)
+	result := self.Copy()
+	return result.Pow(result, e).(*S256Field)
 }

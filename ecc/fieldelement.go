@@ -31,49 +31,63 @@ func (self *FieldElement) Ne(other FieldInteger) bool {
 	return self.Num != o.Num || self.Prime != o.Prime
 }
 
-func (self *FieldElement) Add(other FieldInteger) FieldInteger {
-	o := other.(*FieldElement)
-	if self.Prime != o.Prime {
+func (z *FieldElement) Add(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+	if elemx.Prime != elemy.Prime {
 		panic("Cannot add two numbers in different Fields")
 	}
-	num := (self.Num + o.Num) % self.Prime
-	return NewFieldElement(num, self.Prime)
+	num := (elemx.Num + elemy.Num) % elemx.Prime
+	*z = FieldElement{Num: num, Prime: elemx.Prime}
+	return z
 }
 
-func (self *FieldElement) Sub(other FieldInteger) FieldInteger {
-	o := other.(*FieldElement)
-	if self.Prime != o.Prime {
+func (z *FieldElement) Sub(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+	if elemx.Prime != elemy.Prime {
 		panic("Cannot subtract two numbers in different Fields")
 	}
-	num := (self.Num - o.Num + self.Prime) % self.Prime
-	return NewFieldElement(num, self.Prime)
+	num := (elemx.Num - elemy.Num + elemx.Prime) % elemx.Prime
+	*z = FieldElement{Num: num, Prime: elemx.Prime}
+	return z
 }
 
-func (self *FieldElement) Mul(other FieldInteger) FieldInteger {
-	o := other.(*FieldElement)
-	if self.Prime != o.Prime {
+func (z *FieldElement) Mul(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+	if elemx.Prime != elemy.Prime {
 		panic("Cannot multiply two numbers in different Fields")
 	}
-	num := (self.Num * o.Num) % self.Prime
-	return NewFieldElement(num, self.Prime)
+	num := (elemx.Num * elemy.Num) % elemx.Prime
+	*z = FieldElement{Num: num, Prime: elemx.Prime}
+	return z
 }
 
-func (self *FieldElement) Div(other FieldInteger) FieldInteger {
-	o := other.(*FieldElement)
-	if self.Prime != o.Prime {
+func (z *FieldElement) Div(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+	if elemx.Prime != elemy.Prime {
 		panic("Cannot divide two numbers in different Fields")
 	}
-	num := (self.Num * intPow(o.Num, self.Prime-2, self.Prime)) % self.Prime
-	return NewFieldElement(num, self.Prime)
+	num := (elemx.Num * intPow(elemy.Num, elemx.Prime-2, elemx.Prime)) % elemx.Prime
+	*z = FieldElement{Num: num, Prime: elemx.Prime}
+	return z
 }
 
-func (self *FieldElement) Pow(exponent *big.Int) FieldInteger {
-	n := (exponent.Int64() + self.Prime - 1) % (self.Prime - 1)
-	num := intPow(self.Num, n, self.Prime)
-	return NewFieldElement(num, self.Prime)
+func (z *FieldElement) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
+	field := n.(*FieldElement)
+	e := (exponent.Int64() + field.Prime - 1) % (field.Prime - 1)
+	num := intPow(field.Num, e, field.Prime)
+	*z = FieldElement{Num: num, Prime: field.Prime}
+	return z
 }
 
-func (self *FieldElement) Rmul(coeff *big.Int) FieldInteger {
+func (z *FieldElement) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
+	panic("Not implemented")
+}
+
+func (z *FieldElement) Copy() FieldInteger {
+	panic("Not implemented")
+}
+
+func (z *FieldElement) Set(n FieldInteger) FieldInteger {
 	panic("Not implemented")
 }
 

@@ -54,7 +54,9 @@ func ParseS256Point(secBin []byte) *S256Point {
 	xval.SetBytes(secBin[1:])
 	x := NewS256Field(xval, P)
 	// right side of the equation y^2 = x^3 + 7
-	alpha := x.Pow(big.NewInt(3)).Add(B).(*S256Field)
+	alpha := new(S256Field)
+	alpha.Pow(x, big.NewInt(3))
+	alpha.Add(alpha, B)
 	// solve for left side
 	beta := alpha.Sqrt()
 	var even_beta, odd_beta *S256Field
@@ -100,24 +102,30 @@ func (self *S256Point) Ne(other *S256Point) bool {
 	return !self.Eq(other)
 }
 
-func (self *S256Point) Add(other *S256Point) *S256Point {
-	p1 := self.Point()
-	p2 := other.Point()
-	result := p1.Add(p2)
+// Set z to p1 + p2 and return z.
+func (z *S256Point) Add(p1, p2 *S256Point) *S256Point {
+	result := new(Point)
+	result.Add(p1.Point(), p2.Point())
 	if result.X == nil && result.Y == nil {
-		return &S256Point{X: nil, Y: nil}
+		*z = S256Point{X: nil, Y: nil}
+	} else {
+		*z = S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
 	}
-	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+	return z
 }
 
-func (self *S256Point) Rmul(coefficient *big.Int) *S256Point {
-	var coef *big.Int = new(big.Int)
+// Set z to c * p and return z.
+func (z *S256Point) Cmul(p *S256Point, coefficient *big.Int) *S256Point {
+	coef := new(big.Int)
 	coef.Mod(coefficient, N)
-	result := self.Point().Rmul(coef)
+	result := new(Point)
+	result.Cmul(p.Point(), coef)
 	if result.X == nil && result.Y == nil {
-		return &S256Point{X: nil, Y: nil}
+		*z = S256Point{X: nil, Y: nil}
+	} else {
+		*z = S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
 	}
-	return &S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+	return z
 }
 
 func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
@@ -133,8 +141,9 @@ func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
 	v := new(big.Int)
 	v.Mul(sig.R, s_inv).Mod(v, N)
 	// u*G + v*P should have as the x coordinate, r
-	total := G.Rmul(u)
-	total = total.Add(self.Rmul(v))
+	total := new(S256Point)
+	total.Cmul(G, u)
+	total.Add(total, new(S256Point).Cmul(self, v))
 	return total.X.Num.Cmp(sig.R) == 0
 }
 
