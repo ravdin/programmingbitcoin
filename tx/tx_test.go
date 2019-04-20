@@ -41,7 +41,7 @@ func TestTx(t *testing.T) {
 		if txIn.PrevIndex != 0 {
 			t.Errorf("Failed to parse PrevIndex!")
 		}
-		if expectedScriptSig != txIn.ScriptSig.Serialize() {
+		if expectedScriptSig != hex.EncodeToString(txIn.ScriptSig.Serialize()) {
 			t.Errorf("Failed to parse script sig!")
 		}
 		if expectedSequence != txIn.Sequence {
@@ -64,7 +64,7 @@ func TestTx(t *testing.T) {
 			}
 		}
 		for i, scriptSig := range expectedScriptSigs {
-			if testTx.TxOuts[i].ScriptPubKey.Serialize() != scriptSig {
+			if hex.EncodeToString(testTx.TxOuts[i].ScriptPubKey.Serialize()) != scriptSig {
 				t.Errorf("Failed to parse script sig!")
 			}
 		}

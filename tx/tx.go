@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"github.com/ravdin/programmingbitcoin/ecc"
+	"github.com/ravdin/programmingbitcoin/script"
 	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 )
@@ -25,16 +26,23 @@ func (self *Tx) Id() string {
 func (self *Tx) Hash() []byte {
 	serialized := self.Serialize()
 	// reverse the array
-	length := len(serialized)
-	for i := 0; i < length/2; i++ {
-		serialized[i], serialized[length-i-1] = serialized[length-i-1], serialized[i]
-	}
+	util.ReverseByteArray(serialized)
 	return util.Hash256(serialized)
 }
 
 // Returns the byte serialization of the transaction
 func (self *Tx) Serialize() []byte {
-	panic("Not implemented")
+	result := util.Int32ToLittleEndian(self.Version)
+	result = append(result, util.EncodeVarInt(len(self.TxIns))...)
+	for _, txIn := range self.TxIns {
+		result = append(result, txIn.Serialize()...)
+	}
+	result = append(result, util.EncodeVarInt(len(self.TxOuts))...)
+	for _, txOut := range self.TxOuts {
+		result = append(result, txOut.Serialize()...)
+	}
+	result = append(result, util.Int32ToLittleEndian(self.Locktime)...)
+	return result
 }
 
 func ParseTx(s *bytes.Reader, testnet bool) *Tx {
@@ -64,8 +72,8 @@ func ParseTx(s *bytes.Reader, testnet bool) *Tx {
 	return &Tx{Version: version, TxIns: tx_ins, TxOuts: tx_outs, Locktime: locktime, Testnet: testnet}
 }
 
+// Returns the fee of this transaction in satoshi
 func (self *Tx) Fee() uint64 {
-	//Returns the fee of this transaction in satoshi'
 	// initialize input sum and output sum
 	// use TxIn.value() to sum up the input amounts
 	// use TxOut.amount to sum up the output amounts
@@ -83,7 +91,30 @@ func (self *Tx) Fee() uint64 {
 // Returns the integer representation of the hash that needs to get
 // signed for index inputIndex
 func (self *Tx) SigHash(inputIndex int) *big.Int {
-	panic("Not implemented")
+	serialized := util.Int32ToLittleEndian(self.Version)
+	serialized = append(serialized, util.EncodeVarInt(len(self.TxIns))...)
+	for i, txIn := range self.TxIns {
+		var scriptSig *script.Script = nil
+		if i == inputIndex {
+			scriptSig = txIn.ScriptPubKey(self.Testnet)
+		}
+		serialized = append(serialized, NewTxIn(
+			txIn.PrevTx,
+			txIn.PrevIndex,
+			scriptSig,
+			txIn.Sequence,
+		).Serialize()...)
+	}
+	serialized = append(serialized, util.EncodeVarInt(len(self.TxOuts))...)
+	for _, txOut := range self.TxOuts {
+		serialized = append(serialized, txOut.Serialize()...)
+	}
+	serialized = append(serialized, util.Int32ToLittleEndian(self.Locktime)...)
+	serialized = append(serialized, util.Int32ToLittleEndian(util.SIGHASH_ALL)...)
+	h256 := util.Hash256(serialized)
+	result := new(big.Int)
+	result.SetBytes(h256)
+	return result
 }
 
 // Returns whether the input has a valid signature
@@ -93,7 +124,15 @@ func (self *Tx) verifyInput(inputIndex int) bool {
 
 // Verify this transaction
 func (self *Tx) Verify() bool {
-	panic("Not implemented")
+	if self.Fee() < 0 {
+		return false
+	}
+	for i := range self.TxIns {
+		if !self.verifyInput(i) {
+			return false
+		}
+	}
+	return true
 }
 
 func (self *Tx) SignInput(inputIndex int, pk *ecc.PrivateKey) bool {

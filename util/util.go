@@ -7,7 +7,12 @@ import (
 	"math/big"
 )
 
-const BASE58ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+const (
+	SIGHASH_ALL    uint32 = 1
+	SIGHASH_NONE   uint32 = 2
+	SIGHASH_SINGLE uint32 = 3
+	BASE58ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+)
 
 func HexStringToBytes(str string) []byte {
 	if len(str)&1 == 1 {
@@ -28,7 +33,17 @@ func HexStringToBigInt(str string) *big.Int {
 	return result
 }
 
+// Reverse a byte array in place and return the result.
+func ReverseByteArray(arr []byte) []byte {
+	length := len(arr)
+	for i := 0; i < length/2; i++ {
+		arr[i], arr[length-i-1] = arr[length-i-1], arr[i]
+	}
+	return arr
+}
+
 func encodeBase58(s string) string {
+	// Determine how many 0 bytes the input starts with
 	count := 0
 	chars := []byte(s)
 	for _, c := range chars {
@@ -98,19 +113,19 @@ func EncodeVarInt(i int) []byte {
 	}
 	if i < 0x10000 {
 		result := make([]byte, 3)
-		copy(result[1:], Int16ToLittleEndian(int16(i)))
+		copy(result[1:], Int16ToLittleEndian(uint16(i)))
 		result[0] = 0xfd
 		return result
 	}
 	if i < 0x100000000 {
 		result := make([]byte, 5)
-		copy(result[1:], Int32ToLittleEndian(int32(i)))
+		copy(result[1:], Int32ToLittleEndian(uint32(i)))
 		result[0] = 0xfe
 		return result
 	}
 
 	result := make([]byte, 9)
-	copy(result[1:], Int64ToLittleEndian(int64(i)))
+	copy(result[1:], Int64ToLittleEndian(uint64(i)))
 	result[0] = 0xff
 	return result
 }
@@ -182,7 +197,7 @@ func ByteToLittleEndian(num byte) byte {
 	return buf.Bytes()[0]
 }
 
-func Int16ToLittleEndian(num int16) []byte {
+func Int16ToLittleEndian(num uint16) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
 	if err != nil {
@@ -191,7 +206,7 @@ func Int16ToLittleEndian(num int16) []byte {
 	return buf.Bytes()
 }
 
-func Int32ToLittleEndian(num int32) []byte {
+func Int32ToLittleEndian(num uint32) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
 	if err != nil {
@@ -200,7 +215,7 @@ func Int32ToLittleEndian(num int32) []byte {
 	return buf.Bytes()
 }
 
-func Int64ToLittleEndian(num int64) []byte {
+func Int64ToLittleEndian(num uint64) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
 	if err != nil {

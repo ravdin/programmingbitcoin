@@ -26,7 +26,7 @@ func TestScript(t *testing.T) {
 	})
 
 	t.Run("Test serialize", func(t *testing.T) {
-		serialized := s.Serialize()
+		serialized := hex.EncodeToString(s.Serialize())
 		if serialized != scriptPubKey {
 			t.Errorf("Expected %v, got %v", scriptPubKey, serialized)
 		}

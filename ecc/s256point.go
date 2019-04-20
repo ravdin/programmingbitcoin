@@ -147,8 +147,8 @@ func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
 	return total.X.Num.Cmp(sig.R) == 0
 }
 
+// returns the binary version of the SEC format
 func (self *S256Point) Sec(compressed bool) []byte {
-	// returns the binary version of the SEC format
 	x := util.IntToBytes(self.X.Num, 32)
 	y := util.IntToBytes(self.Y.Num, 32)
 	var result []byte
@@ -181,8 +181,8 @@ func (self *S256Point) Address(compressed bool, testnet bool) string {
 	} else {
 		prefix = 0
 	}
-	h160 = append(h160, 0)
-	copy(h160[1:], h160)
-	h160[0] = prefix
-	return util.EncodeBase58Checksum(h160)
+	withPrefix := make([]byte, len(h160)+1)
+	withPrefix[0] = prefix
+	copy(withPrefix[1:], h160)
+	return util.EncodeBase58Checksum(withPrefix)
 }

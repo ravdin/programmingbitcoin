@@ -2,7 +2,6 @@ package script
 
 import (
 	"bytes"
-	"encoding/hex"
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
@@ -63,7 +62,7 @@ func Parse(s *bytes.Reader) *Script {
 	return &Script{cmds: cmds}
 }
 
-func (self *Script) Serialize() string {
+func (self *Script) Serialize() []byte {
 	var raw []byte
 	for _, cmd := range self.cmds {
 		length := len(cmd)
@@ -82,7 +81,7 @@ func (self *Script) Serialize() string {
 			} else if length >= 0x100 && length <= 520 {
 				// 77 is pushdata2
 				raw = append(raw, util.ByteToLittleEndian(77))
-				raw = append(raw, util.Int16ToLittleEndian(int16(length))...)
+				raw = append(raw, util.Int16ToLittleEndian(uint16(length))...)
 			}
 			raw = append(raw, cmd...)
 		}
@@ -91,5 +90,5 @@ func (self *Script) Serialize() string {
 	var result []byte = make([]byte, len(total)+len(raw))
 	copy(result, total)
 	copy(result[len(total):], raw)
-	return hex.EncodeToString(result)
+	return result
 }
