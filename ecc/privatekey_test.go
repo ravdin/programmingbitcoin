@@ -13,7 +13,7 @@ func TestPrivateKey(t *testing.T) {
 		pk := NewPrivateKey(new(big.Int).Rand(r, N))
 		z := new(big.Int).Rand(r, util.HexStringToBigInt("ffffffffffffffffffffffffffffffffffffffffffffffff"))
 		sig := pk.Sign(z)
-		if !pk.point.Verify(z, sig) {
+		if !pk.Point.Verify(z, sig) {
 			t.Errorf("Private key signature failed!")
 		}
 	})

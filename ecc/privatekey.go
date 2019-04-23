@@ -11,11 +11,11 @@ import (
 
 type PrivateKey struct {
 	secret *big.Int
-	point  *S256Point
+	Point  *S256Point
 }
 
 func NewPrivateKey(secret *big.Int) *PrivateKey {
-	return &PrivateKey{secret: secret, point: new(S256Point).Cmul(G, secret)}
+	return &PrivateKey{secret: secret, Point: new(S256Point).Cmul(G, secret)}
 }
 
 func Hex(self *PrivateKey) string {
@@ -62,17 +62,14 @@ func (self *PrivateKey) Wif(compressed bool, testnet bool) string {
 }
 
 func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
-	var ztmp *big.Int = new(big.Int)
 	var k []byte = make([]byte, 32)
 	var v []byte = make([]byte, 32)
 	for i := 0; i < 32; i++ {
 		k[i] = 0
 		v[i] = 1
 	}
-	ztmp.Set(z)
-	if ztmp.Cmp(N) > 0 {
-		ztmp.Sub(ztmp, N)
-	}
+	var ztmp *big.Int = new(big.Int)
+	ztmp.Mod(z, N)
 	zBytes := util.IntToBytes(ztmp, 32)
 	secretBytes := util.IntToBytes(self.secret, 32)
 	mac := hmac.New(sha256.New, k)
@@ -99,7 +96,7 @@ func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
 		mac.Write(v)
 		v = mac.Sum(nil)
 		candidate.SetBytes(v)
-		if candidate.Cmp(big.NewInt(1)) >= 0 && candidate.Cmp(N) < 0 {
+		if candidate.Sign() > 0 && candidate.Cmp(N) < 0 {
 			break
 		}
 		mac.Reset()

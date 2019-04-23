@@ -92,3 +92,21 @@ func (self *Script) Serialize() []byte {
 	copy(result[len(total):], raw)
 	return result
 }
+
+func (self *Script) Evaluate(z []byte) bool {
+	// create a copy as we may need to add to this list if we have a RedeemScript
+	/*
+	cmds := NewOpStack(self.cmds)
+	stack := NewOpStack(nil)
+	for cmds.Length > 0 {
+		cmd := cmds.Pop()
+		if len(cmd) == 0 {
+			// This is an opcode, do what it says.
+			opcode := int(cmd[0])
+			operation := OpCodeFunctions[opcode]
+
+		}
+	}
+	*/
+	panic("Not implemented")
+}
