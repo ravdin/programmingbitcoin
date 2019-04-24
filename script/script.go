@@ -1,12 +1,37 @@
 package script
 
 import (
+	"fmt"
 	"bytes"
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
 type Script struct {
 	cmds [][]byte
+}
+
+func (z *Script) Add(x, y *Script) *Script {
+	cmds := make([][]byte, len(x.cmds)+len(y.cmds))
+	copy(cmds, x.cmds)
+	copy(cmds[len(x.cmds):], y.cmds)
+	z.cmds = cmds
+	return z
+}
+
+func NewScript(cmds [][]byte) *Script {
+	return &Script{cmds: cmds}
+}
+
+// Takes a hash160 and returns the p2pkh ScriptPubKey
+func P2pkhScript(h160 []byte) *Script {
+	cmds := [][]byte{
+		[]byte{0x76},
+		[]byte{0xa9},
+		h160,
+		[]byte{0x88},
+		[]byte{0xac},
+	}
+	return NewScript(cmds)
 }
 
 func Parse(s *bytes.Reader) *Script {
@@ -95,18 +120,52 @@ func (self *Script) Serialize() []byte {
 
 func (self *Script) Evaluate(z []byte) bool {
 	// create a copy as we may need to add to this list if we have a RedeemScript
-	/*
 	cmds := NewOpStack(self.cmds)
 	stack := NewOpStack(nil)
 	for cmds.Length > 0 {
 		cmd := cmds.Pop()
-		if len(cmd) == 0 {
+		if len(cmd) == 1 {
 			// This is an opcode, do what it says.
 			opcode := int(cmd[0])
 			operation := OpCodeFunctions[opcode]
-
+			switch opcode {
+			case 99:
+			case 100:
+				// if, notif
+				panic("Not implemented")
+				break
+			case 107:
+			case 108:
+				// stack to altstack
+				panic("Not implemented")
+				break
+			case 172:
+			case 173:
+			case 174:
+			case 175:
+				// Signing operations.
+				if !operation(stack, [][]byte{z}) {
+					// TODO: Log output
+					fmt.Sprintf("Op %s failed!\n", OpCodeNames[opcode])
+					return false
+				}
+				break
+			default:
+				if !operation(stack) {
+					// TODO: log output
+					fmt.Sprintf("Op %s failed!\n", OpCodeNames[opcode])
+					return false
+				}
+			}
+		} else {
+			stack.Push(cmd)
 		}
 	}
-	*/
-	panic("Not implemented")
+	if stack.Length == 0 {
+		return false
+	}
+	if bytes.Equal(stack.Pop(), []byte{}) {
+		return false
+	}
+	return true
 }

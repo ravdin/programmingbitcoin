@@ -95,9 +95,9 @@ func TestTx(t *testing.T) {
 
 	t.Run("Test sig hash", func(t *testing.T) {
 		tx := fetcher.fetch("452c629d67e41baec3ac6f04fe744b4b9617f8f859c63b3002f8684e7a4fee03", false, false)
-		expected := util.HexStringToBigInt("27e0c5994dec7824e56dec6b2fcb342eb7cdb0d0957c2fce9882f715e85d81a6")
+		expected := util.HexStringToBytes("27e0c5994dec7824e56dec6b2fcb342eb7cdb0d0957c2fce9882f715e85d81a6")
 		actual := tx.SigHash(0)
-		if actual.Cmp(expected) != 0 {
+		if !bytes.Equal(actual, expected) {
 			t.Errorf("Expected %x, got %x", expected, actual)
 		}
 	})

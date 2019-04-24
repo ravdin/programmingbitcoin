@@ -90,7 +90,7 @@ func (self *Tx) Fee() uint64 {
 
 // Returns the integer representation of the hash that needs to get
 // signed for index inputIndex
-func (self *Tx) SigHash(inputIndex int) *big.Int {
+func (self *Tx) SigHash(inputIndex int) []byte {
 	serialized := util.Int32ToLittleEndian(self.Version)
 	serialized = append(serialized, util.EncodeVarInt(len(self.TxIns))...)
 	for i, txIn := range self.TxIns {
@@ -111,15 +111,19 @@ func (self *Tx) SigHash(inputIndex int) *big.Int {
 	}
 	serialized = append(serialized, util.Int32ToLittleEndian(self.Locktime)...)
 	serialized = append(serialized, util.Int32ToLittleEndian(util.SIGHASH_ALL)...)
-	h256 := util.Hash256(serialized)
-	result := new(big.Int)
-	result.SetBytes(h256)
-	return result
+	return util.Hash256(serialized)
 }
 
 // Returns whether the input has a valid signature
 func (self *Tx) verifyInput(inputIndex int) bool {
-	panic("Not implemented")
+	txIn := self.TxIns[inputIndex]
+	scriptPubKey := txIn.ScriptPubKey(self.Testnet)
+	z := self.SigHash(inputIndex)
+	// combine the current ScriptSig and the previous ScriptPubKey
+	script := new(script.Script)
+	script.Add(txIn.ScriptSig, scriptPubKey)
+	// evaluate the combined script
+	return script.Evaluate(z)
 }
 
 // Verify this transaction
@@ -136,5 +140,17 @@ func (self *Tx) Verify() bool {
 }
 
 func (self *Tx) SignInput(inputIndex int, pk *ecc.PrivateKey) bool {
-	panic("Not implemented")
+	z := new(big.Int)
+	z.SetBytes(self.SigHash(inputIndex))
+	// get der signature of z from private key
+	der := pk.Sign(z).Der()
+	der = append(der, byte(util.SIGHASH_ALL))
+	// calculate the sec
+	sec := pk.Point.Sec(true)
+	// initialize a new script with [sig, sec] as the cmds
+	script := script.NewScript([][]byte{der, sec})
+	// change input's script_sig to new script
+	self.TxIns[inputIndex].ScriptSig = script
+	// return whether sig is valid using self.verify_input
+	return self.verifyInput(inputIndex)
 }

@@ -37,7 +37,7 @@ func op_equal(stack *OpStack, args ...[][]byte) bool {
 	return true
 }
 
-func op_equalverify(stack *OpStack, args...[][]byte) bool {
+func op_equalverify(stack *OpStack, args ...[][]byte) bool {
 	return op_equal(stack) && op_verify(stack)
 }
 
