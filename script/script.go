@@ -1,8 +1,11 @@
 package script
 
 import (
+	"os"
 	"fmt"
 	"bytes"
+	"strings"
+	"encoding/hex"
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
@@ -16,6 +19,23 @@ func (z *Script) Add(x, y *Script) *Script {
 	copy(cmds[len(x.cmds):], y.cmds)
 	z.cmds = cmds
 	return z
+}
+
+func (self *Script) String() string {
+	result := make([]string, len(self.cmds))
+	for i, cmd := range(self.cmds) {
+		if len(cmd) == 1 {
+			opcode := int(cmd[0])
+			if name, ok := OpCodeNames[opcode]; ok {
+				result[i] = name
+			} else {
+				result[i] = fmt.Sprintf(`OP_[%d]`, opcode)
+			}
+		} else {
+			result[i] = hex.EncodeToString(cmd)
+		}
+	}
+	return strings.Join(result, " ")
 }
 
 func NewScript(cmds [][]byte) *Script {
@@ -120,40 +140,35 @@ func (self *Script) Serialize() []byte {
 
 func (self *Script) Evaluate(z []byte) bool {
 	// create a copy as we may need to add to this list if we have a RedeemScript
-	cmds := NewOpStack(self.cmds)
+	cmds := make([][]byte, len(self.cmds))
+	copy(cmds, self.cmds)
 	stack := NewOpStack(nil)
-	for cmds.Length > 0 {
-		cmd := cmds.Pop()
+	for len(cmds) > 0 {
+		cmd := cmds[0]
+		cmds = cmds[1:]
 		if len(cmd) == 1 {
 			// This is an opcode, do what it says.
 			opcode := int(cmd[0])
 			operation := OpCodeFunctions[opcode]
+			fmt.Fprintf(os.Stderr, "Running %s...\n", OpCodeNames[opcode])
 			switch opcode {
-			case 99:
-			case 100:
+			case 99, 100:
 				// if, notif
 				panic("Not implemented")
-				break
-			case 107:
-			case 108:
+			case 107, 108:
 				// stack to altstack
 				panic("Not implemented")
-				break
-			case 172:
-			case 173:
-			case 174:
-			case 175:
+			case 172, 173, 174, 175:
 				// Signing operations.
 				if !operation(stack, [][]byte{z}) {
 					// TODO: Log output
-					fmt.Sprintf("Op %s failed!\n", OpCodeNames[opcode])
+					fmt.Fprintf(os.Stderr, "Op %s failed!\n", OpCodeNames[opcode])
 					return false
 				}
-				break
 			default:
 				if !operation(stack) {
 					// TODO: log output
-					fmt.Sprintf("Op %s failed!\n", OpCodeNames[opcode])
+					fmt.Fprintf(os.Stderr, "Op %s failed!\n", OpCodeNames[opcode])
 					return false
 				}
 			}

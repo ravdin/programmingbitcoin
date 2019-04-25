@@ -3,11 +3,13 @@ package script
 type OpCodeFunction func(stack *OpStack, args ...[][]byte) bool
 
 var OpCodeFunctions = map[int]OpCodeFunction{
+	0:   op_0,
 	105: op_verify,
 	118: op_dup,
 	135: op_equal,
 	136: op_equalverify,
 	168: op_sha256,
+	169: op_hash160,
 	172: op_checksig,
 }
 

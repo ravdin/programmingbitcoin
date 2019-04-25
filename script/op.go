@@ -7,6 +7,11 @@ import (
 	"math/big"
 )
 
+func op_0(stack *OpStack, args ...[][]byte) bool {
+	stack.Push(encodeNum(0))
+	return true
+}
+
 func op_verify(stack *OpStack, args ...[][]byte) bool {
 	if stack.Length < 1 {
 		return false
