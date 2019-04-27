@@ -11,6 +11,7 @@ var OpCodeFunctions = map[int]OpCodeFunction{
 	168: op_sha256,
 	169: op_hash160,
 	172: op_checksig,
+	174: op_checkmultisig,
 }
 
 var OpCodeNames = map[int]string{

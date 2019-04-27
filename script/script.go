@@ -1,12 +1,12 @@
 package script
 
 import (
-	"os"
-	"fmt"
 	"bytes"
-	"strings"
 	"encoding/hex"
+	"fmt"
 	"github.com/ravdin/programmingbitcoin/util"
+	"os"
+	"strings"
 )
 
 type Script struct {
@@ -23,7 +23,7 @@ func (z *Script) Add(x, y *Script) *Script {
 
 func (self *Script) String() string {
 	result := make([]string, len(self.cmds))
-	for i, cmd := range(self.cmds) {
+	for i, cmd := range self.cmds {
 		if len(cmd) == 1 {
 			opcode := int(cmd[0])
 			if name, ok := OpCodeNames[opcode]; ok {
@@ -179,7 +179,7 @@ func (self *Script) Evaluate(z []byte) bool {
 	if stack.Length == 0 {
 		return false
 	}
-	if bytes.Equal(stack.Pop(), []byte{}) {
+	if bytes.Equal(stack.Pop(), []byte{0}) {
 		return false
 	}
 	return true

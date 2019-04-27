@@ -2,9 +2,11 @@ package script
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/ravdin/programmingbitcoin/ecc"
 	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
+	"os"
 )
 
 func op_0(stack *OpStack, args ...[][]byte) bool {
@@ -80,6 +82,52 @@ func op_checksig(stack *OpStack, args ...[][]byte) bool {
 	} else {
 		stack.Push(encodeNum(0))
 	}
+	return true
+}
+
+func op_checkmultisig(stack *OpStack, args ...[][]byte) bool {
+	z := new(big.Int)
+	z.SetBytes(args[0][0])
+	if stack.Length < 1 {
+		return false
+	}
+	n := decodeNum(stack.Pop())
+	if stack.Length < n+1 {
+		return false
+	}
+	secPubkeys := make([][]byte, n)
+	for i := 0; i < n; i++ {
+		secPubkeys[i] = stack.Pop()
+	}
+	m := decodeNum(stack.Pop())
+	if stack.Length < m+1 {
+		return false
+	}
+	derSignatures := make([][]byte, m)
+	for i := 0; i < m; i++ {
+		sig := stack.Pop()
+		sigLength := len(sig)
+		derSignatures[i] = sig[:sigLength-1]
+	}
+	// OP_CHECKMULTISIG bug
+	stack.Pop()
+	secIndex := 0
+	for derIndex := 0; derIndex < m; derIndex++ {
+		if secIndex >= n {
+			fmt.Fprintf(os.Stderr, "signatures no good or not in right order\n")
+			return false
+		}
+		sig := ecc.ParseSignature(derSignatures[derIndex])
+		for secIndex < n {
+			point := ecc.ParseS256Point(secPubkeys[secIndex])
+			secIndex++
+			if point.Verify(z, sig) {
+				break
+			}
+		}
+	}
+	// The signatures are valid, push a 1 to the stack.
+	stack.Push(encodeNum(1))
 	return true
 }
 
