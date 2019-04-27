@@ -3,10 +3,11 @@ package tx
 import (
 	"bytes"
 	"encoding/hex"
+	"math/big"
+
 	"github.com/ravdin/programmingbitcoin/ecc"
 	"github.com/ravdin/programmingbitcoin/script"
 	"github.com/ravdin/programmingbitcoin/util"
-	"math/big"
 )
 
 type Tx struct {
@@ -17,6 +18,10 @@ type Tx struct {
 	Testnet  bool
 }
 
+func NewTx(version uint32, txIns []*TxIn, txOuts []*TxOut, locktime uint32, testnet bool) *Tx {
+	return &Tx{Version: version, TxIns: txIns, TxOuts: txOuts, Locktime: locktime, Testnet: testnet}
+}
+
 // Human-readable hexadecimal of the transaction hash
 func (self *Tx) Id() string {
 	return hex.EncodeToString(self.Hash())
@@ -24,10 +29,9 @@ func (self *Tx) Id() string {
 
 // Binary hash of the legacy serialization
 func (self *Tx) Hash() []byte {
-	serialized := self.Serialize()
+	hash := util.Hash256(self.Serialize())
 	// reverse the array
-	util.ReverseByteArray(serialized)
-	return util.Hash256(serialized)
+	return util.ReverseByteArray(hash)
 }
 
 // Returns the byte serialization of the transaction
@@ -69,7 +73,7 @@ func ParseTx(s *bytes.Reader, testnet bool) *Tx {
 	}
 	s.Read(buffer)
 	locktime := util.LittleEndianToInt32(buffer)
-	return &Tx{Version: version, TxIns: tx_ins, TxOuts: tx_outs, Locktime: locktime, Testnet: testnet}
+	return NewTx(version, tx_ins, tx_outs, locktime, testnet)
 }
 
 // Returns the fee of this transaction in satoshi

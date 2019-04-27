@@ -2,10 +2,14 @@ package tx
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
-	"github.com/ravdin/programmingbitcoin/util"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"sync"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 type txFetcher struct {
@@ -26,12 +30,47 @@ func NewTxFetcher() *txFetcher {
 	return instance
 }
 
+func getUrl(testnet bool) string {
+	if testnet {
+		return "http://testnet.programmingbitcoin.com"
+	}
+	return "http://mainnet.programmingbitcoin.com"
+}
+
 func (self *txFetcher) fetch(txId string, testnet bool, fresh bool) *Tx {
 	if tx, ok := self.cache[txId]; ok && !fresh {
 		tx.Testnet = testnet
 		return tx
 	}
-	panic("Not implemented!")
+	url := fmt.Sprintf("%s/tx/%s.hex", getUrl(testnet), txId)
+	resp, err := http.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	raw := make([]byte, hex.DecodedLen(len(body)))
+	hex.Decode(raw, body)
+	var tx *Tx
+	if raw[4] == 0 {
+		length := len(raw)
+		locktime := util.LittleEndianToInt32(raw[length-4:])
+		copy(raw[4:], raw[6:])
+		reader := bytes.NewReader(raw[:length-2])
+		tx = ParseTx(reader, testnet)
+		tx.Locktime = locktime
+	} else {
+		reader := bytes.NewReader(raw)
+		tx = ParseTx(reader, testnet)
+	}
+	if txId != tx.Id() {
+		panic(fmt.Sprintf("Not the same id: %s vs %s", txId, tx.Id()))
+	}
+	self.cache[txId] = tx
+	tx.Testnet = testnet
+	return tx
 }
 
 func (self *txFetcher) loadCache(filename string) {

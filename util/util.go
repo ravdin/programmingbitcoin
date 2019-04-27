@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 )
 
@@ -74,6 +75,24 @@ func encodeBase58(s string) string {
 
 func EncodeBase58Checksum(b []byte) string {
 	return encodeBase58(string(append(b, Hash256(b)[:4]...)))
+}
+
+func DecodeBase58(encoded string) []byte {
+	num := big.NewInt(0)
+	b58 := big.NewInt(58)
+	alphabet := []byte(BASE58ALPHABET)
+	chars := []byte(encoded)
+	for _, c := range chars {
+		num.Mul(num, b58)
+		num.Add(num, big.NewInt(int64(bytes.IndexByte(alphabet, c))))
+	}
+	combined := num.Bytes()
+	length := len(combined)
+	checksum := combined[length-4:]
+	if !bytes.Equal(Hash256(combined[:length-4])[:4], checksum) {
+		panic(fmt.Sprintf("Bad address: %v %v", checksum, Hash256(combined[:length-4])[:4]))
+	}
+	return combined[1 : length-4]
 }
 
 func IntToBytes(num *big.Int, size int) []byte {
@@ -185,6 +204,13 @@ func LittleEndianToInt64(b []byte) uint64 {
 	if err != nil {
 		panic(err)
 	}
+	return result
+}
+
+func LittleEndianToBigInt(b []byte) *big.Int {
+	result := new(big.Int)
+	ReverseByteArray(b)
+	result.SetBytes(b)
 	return result
 }
 

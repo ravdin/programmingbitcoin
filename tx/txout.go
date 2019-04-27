@@ -2,6 +2,7 @@ package tx
 
 import (
 	"bytes"
+
 	"github.com/ravdin/programmingbitcoin/script"
 	"github.com/ravdin/programmingbitcoin/util"
 )
@@ -9,6 +10,10 @@ import (
 type TxOut struct {
 	Amount       uint64
 	ScriptPubKey *script.Script
+}
+
+func NewTxOut(amount uint64, scriptPubkey *script.Script) *TxOut {
+	return &TxOut{Amount: amount, ScriptPubKey: scriptPubkey}
 }
 
 // Takes a byte stream and parses the tx_output at the start
@@ -21,7 +26,7 @@ func ParseTxOut(s *bytes.Reader) *TxOut {
 	s.Read(buffer)
 	amount := util.LittleEndianToInt64(buffer)
 	scriptPubkey := script.Parse(s)
-	return &TxOut{Amount: amount, ScriptPubKey: scriptPubkey}
+	return NewTxOut(amount, scriptPubkey)
 }
 
 // Returns the byte serialization of the transaction output
