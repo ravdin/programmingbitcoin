@@ -249,3 +249,27 @@ func Int64ToLittleEndian(num uint64) []byte {
 	}
 	return buf.Bytes()
 }
+
+// Takes a byte sequence hash160 and returns a p2pkh address string
+func H160ToP2pkhAddress(h160 []byte, testnet bool) string {
+	var prefix byte = 0
+	if testnet {
+		prefix = 0x6f
+	}
+	b := make([]byte, len(h160)+1)
+	b[0] = prefix
+	copy(b[1:], h160)
+	return EncodeBase58Checksum(b)
+}
+
+// Takes a byte sequence hash160 and returns a p2sh address string
+func H160ToP2shAddress(h160 []byte, testnet bool) string {
+	var prefix byte = 5
+	if testnet {
+		prefix = 0xc4
+	}
+	b := make([]byte, len(h160)+1)
+	b[0] = prefix
+	copy(b[1:], h160)
+	return EncodeBase58Checksum(b)
+}
