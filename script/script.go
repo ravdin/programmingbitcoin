@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/ravdin/programmingbitcoin/util"
 	"os"
 	"strings"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 type Script struct {
@@ -136,6 +137,10 @@ func (self *Script) Serialize() []byte {
 	copy(result, total)
 	copy(result[len(total):], raw)
 	return result
+}
+
+func (self *Script) Peek(index int) []byte {
+	return self.cmds[index]
 }
 
 func (self *Script) Evaluate(z []byte) bool {

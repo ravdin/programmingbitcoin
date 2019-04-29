@@ -66,7 +66,7 @@ func TestUtil(t *testing.T) {
 	})
 
 	t.Run("p2sh address", func(t *testing.T) {
-		h160, _ := hex.DecodeString("74d691da1574e6b3c192ecfb52cc8984ee7b6c56")
+		h160 := HexStringToBytes("74d691da1574e6b3c192ecfb52cc8984ee7b6c56")
 		mainnet := "3CLoMMyuoDQTPRD3XYZtCvgvkadrAdvdXh"
 		testnet := "2N3u1R6uwQfuobCqbCgBkpsgBxvr1tZpe7B"
 		actual := H160ToP2shAddress(h160, false)
@@ -76,6 +76,16 @@ func TestUtil(t *testing.T) {
 		actual = H160ToP2shAddress(h160, true)
 		if actual != testnet {
 			t.Errorf("Expected %s, got %s", testnet, actual)
+		}
+	})
+
+	t.Run("calculate new bits", func(t *testing.T) {
+		prevBits := HexStringToBytes("54d80118")
+		timeDifferential := 302400
+		actual := CalculateNewBits(prevBits, timeDifferential)
+		expected := HexStringToBytes("00157617")
+		if !bytes.Equal(actual, expected) {
+			t.Errorf("Expected %v, got %v", expected, actual)
 		}
 	})
 }

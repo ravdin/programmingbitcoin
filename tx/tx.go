@@ -158,3 +158,21 @@ func (self *Tx) SignInput(inputIndex int, pk *ecc.PrivateKey) bool {
 	// return whether sig is valid using self.verify_input
 	return self.verifyInput(inputIndex)
 }
+
+// Returns whether this transaction is a coinbase transaction or not
+func (self *Tx) IsCoinbase() bool {
+	if len(self.TxIns) != 1 {
+		return false
+	}
+	txIn := self.TxIns[0]
+	return bytes.Equal(txIn.PrevTx, make([]byte, 32)) && txIn.PrevIndex == 0xffffffff
+}
+
+// Returns the height of the block this coinbase transaction is in
+func (self *Tx) CoinbaseHeight() *big.Int {
+	if !self.IsCoinbase() {
+		return nil
+	}
+	cmd := self.TxIns[0].ScriptSig.Peek(0)
+	return util.LittleEndianToBigInt(cmd)
+}

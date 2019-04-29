@@ -13,6 +13,7 @@ const (
 	SIGHASH_NONE   uint32 = 2
 	SIGHASH_SINGLE uint32 = 3
 	BASE58ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	TWO_WEEKS      int    = 60 * 60 * 24 * 14
 )
 
 func HexStringToBytes(str string) []byte {
@@ -272,4 +273,56 @@ func H160ToP2shAddress(h160 []byte, testnet bool) string {
 	b[0] = prefix
 	copy(b[1:], h160)
 	return EncodeBase58Checksum(b)
+}
+
+// Turns bits into a target (large 256-bit integer)
+func BitsToTarget(bits []byte) *big.Int {
+	length := len(bits)
+	exponent := bits[length-1]
+	coefficient := new(big.Int)
+	cbits := make([]byte, length-1)
+	copy(cbits[:], bits[:length-1])
+	ReverseByteArray(cbits)
+	coefficient.SetBytes(cbits)
+	// The formula is coefficient * 256**(exponent-3)
+	result := big.NewInt(256)
+	result.Exp(result, big.NewInt(int64(exponent-3)), nil)
+	result.Mul(result, coefficient)
+	return result
+}
+
+// Turns a target integer back into bits
+func TargetToBits(target *big.Int) []byte {
+	rawBytes := target.Bytes()
+	coefficient := make([]byte, 3)
+	var exponent int
+	if rawBytes[0] > 0x7f {
+		copy(coefficient[1:], rawBytes[:2])
+		exponent = len(rawBytes) + 1
+	} else {
+		copy(coefficient, rawBytes[:3])
+		exponent = len(rawBytes)
+	}
+	result := make([]byte, 4)
+	copy(result, ReverseByteArray(coefficient))
+	result[3] = byte(exponent)
+	return result
+}
+
+// Calculates the new bits given a 2016-block time differential and the previous bits
+func CalculateNewBits(previousBits []byte, timeDifferential int) []byte {
+	// if the time differential is greater than 8 weeks, set to 8 weeks
+	if timeDifferential > TWO_WEEKS*4 {
+		timeDifferential = TWO_WEEKS * 4
+	}
+	// if the time differential is less than half a week, set to half a week
+	if timeDifferential < TWO_WEEKS/4 {
+		timeDifferential = TWO_WEEKS / 4
+	}
+	// the new target is the previous target * time differential / two weeks
+	target := BitsToTarget(previousBits)
+	target.Mul(target, big.NewInt(int64(timeDifferential)))
+	target.Div(target, big.NewInt(int64(TWO_WEEKS)))
+	// convert the new target to bits
+	return TargetToBits(target)
 }

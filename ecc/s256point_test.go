@@ -2,9 +2,10 @@ package ecc
 
 import (
 	"bytes"
-	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 	"testing"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 func TestS256Point(t *testing.T) {
@@ -106,8 +107,10 @@ func TestS256Point(t *testing.T) {
 				"mgY3bVusRUL6ZB2Ss999CSrGVbdRwVpM8s",
 			},
 		}
-		compressed := true
-		for secret, addresses := range tests {
+		for i, secret := range []int64{700227072, 321, 4242424242} {
+			addresses := tests[secret]
+			// The first test is compressed and the rest are uncompressed.
+			compressed := i == 0
 			point := new(S256Point)
 			point.Cmul(G, big.NewInt(secret))
 			mainnetExpected := addresses[0]
@@ -120,8 +123,6 @@ func TestS256Point(t *testing.T) {
 			if testnetActual != testnetExpected {
 				t.Errorf("testnet address failed, expected '%v', got '%v'", testnetExpected, testnetActual)
 			}
-			// The first test is compressed and the rest are uncompressed.
-			compressed = false
 		}
 	})
 }
