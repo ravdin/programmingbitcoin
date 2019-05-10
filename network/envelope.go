@@ -31,7 +31,7 @@ func NewEnvelope(command []byte, payload []byte, testnet bool) *Envelope {
 
 func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
 	magic := make([]byte, 4)
-	reader.Read(magic[:])
+	reader.Read(magic)
 	var expectedMagic [4]byte
 	if testnet {
 		expectedMagic = TEST_NETWORK_MAGIC
@@ -69,4 +69,12 @@ func (self *Envelope) Serialize() []byte {
 	copy(result[20:24], checksum)
 	copy(result[24:], self.Payload)
 	return result
+}
+
+func (self *Envelope) String() string {
+	return fmt.Sprintf("%s: %s", string(self.Command), hex.EncodeToString(self.Payload))
+}
+
+func (self *Envelope) Stream() *bytes.Reader {
+	return bytes.NewReader(self.Payload)
 }
