@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bytes"
 	"math/rand"
 	"time"
 
@@ -22,22 +23,6 @@ type VersionMessage struct {
 	LatestBlock      uint32
 	Relay            bool
 }
-
-const (
-	VERSION = iota
-	SERVICES
-	TIMESTAMP
-	RECEIVER_SERVICES
-	RECEIVER_IP
-	RECEIVER_PORT
-	SENDER_SERVICES
-	SENDER_IP
-	SENDER_PORT
-	NONCE
-	USER_AGENT
-	LATEST_BLOCK
-	RELAY
-)
 
 var defaultValues = map[int]interface{}{
 	VERSION:           uint32(70015),
@@ -133,4 +118,51 @@ func (self *VersionMessage) Serialize() []byte {
 	pos += 4
 	result[pos] = relay
 	return result
+}
+
+func (self *VersionMessage) Parse(reader *bytes.Reader) Message {
+	version := make([]byte, 4)
+	reader.Read(version)
+	self.Version = util.LittleEndianToInt32(version)
+	services := make([]byte, 8)
+	reader.Read(services)
+	self.Services = util.LittleEndianToInt64(services)
+	timestamp := make([]byte, 8)
+	reader.Read(timestamp)
+	self.Timestamp = util.LittleEndianToInt64(timestamp)
+	receiverServices := make([]byte, 8)
+	reader.Read(receiverServices)
+	self.ReceiverServices = util.LittleEndianToInt64(receiverServices)
+	receiverIp := make([]byte, 16)
+	reader.Read(receiverIp)
+	copy(self.ReceiverIp[:], receiverIp[12:])
+	receiverPort := make([]byte, 2)
+	reader.Read(receiverPort)
+	self.ReceiverPort = util.LittleEndianToInt16(receiverPort)
+	senderServices := make([]byte, 8)
+	reader.Read(senderServices)
+	self.ReceiverServices = util.LittleEndianToInt64(senderServices)
+	senderIp := make([]byte, 16)
+	reader.Read(senderIp)
+	copy(self.SenderIp[:], senderIp[12:])
+	senderPort := make([]byte, 2)
+	reader.Read(senderPort)
+	self.SenderPort = util.LittleEndianToInt16(senderPort)
+	nonce := make([]byte, 8)
+	reader.Read(nonce)
+	copy(self.Nonce[:], nonce)
+	userAgentLength := util.ReadVarInt(reader)
+	userAgent := make([]byte, userAgentLength)
+	reader.Read(userAgent)
+	self.UserAgent = string(userAgent)
+	latestBlock := make([]byte, 4)
+	reader.Read(latestBlock)
+	self.LatestBlock = util.LittleEndianToInt32(latestBlock)
+	relay, _ := reader.ReadByte()
+	self.Relay = relay != 0
+	return self
+}
+
+func (self *VersionMessage) AckMessage() Message {
+	return NewVerackMessage()
 }
