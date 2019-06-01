@@ -14,6 +14,7 @@ const (
 	SIGHASH_SINGLE uint32 = 3
 	BASE58ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 	TWO_WEEKS      int    = 60 * 60 * 24 * 14
+	MAX_TARGET     string = `ffff0000000000000000000000000000000000000000000000000000`
 )
 
 func HexStringToBytes(str string) []byte {
@@ -324,8 +325,7 @@ func CalculateNewBits(previousBits []byte, timeDifferential int) []byte {
 	target.Mul(target, big.NewInt(int64(timeDifferential)))
 	target.Div(target, big.NewInt(int64(TWO_WEEKS)))
 
-	var maxTarget = new(big.Int)
-	maxTarget.Lsh(big.NewInt(0xffff), 208)
+	var maxTarget = HexStringToBigInt(MAX_TARGET)
 	if target.Cmp(maxTarget) > 0 {
 		target = maxTarget
 	}

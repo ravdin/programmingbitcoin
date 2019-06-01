@@ -5,6 +5,7 @@ import (
 	"math/big"
 )
 
+// Finite field impmentation for testing. This type has a limit of 64 bits.
 type FieldElement struct {
 	Num   int64
 	Prime int64
