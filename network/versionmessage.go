@@ -24,6 +24,22 @@ type VersionMessage struct {
 	Relay            bool
 }
 
+const (
+	VERSION = iota
+	SERVICES
+	TIMESTAMP
+	RECEIVER_SERVICES
+	RECEIVER_IP
+	RECEIVER_PORT
+	SENDER_SERVICES
+	SENDER_IP
+	SENDER_PORT
+	NONCE
+	USER_AGENT
+	LATEST_BLOCK
+	RELAY
+)
+
 var defaultValues = map[int]interface{}{
 	VERSION:           uint32(70015),
 	SERVICES:          uint64(0),
@@ -45,11 +61,13 @@ func NewVersionMessage(args map[int]interface{}) *VersionMessage {
 	for k, v := range defaultValues {
 		values[k] = v
 	}
-	for k, v := range args {
-		values[k] = v
+	if args != nil {
+		for k, v := range args {
+			values[k] = v
+		}
 	}
 	if values[TIMESTAMP] == nil {
-		values[TIMESTAMP] = time.Now().Unix()
+		values[TIMESTAMP] = uint64(time.Now().Unix())
 	}
 	if values[NONCE] == nil {
 		var nonce [8]byte

@@ -33,5 +33,5 @@ func (self *PingMessage) Parse(reader *bytes.Reader) Message {
 }
 
 func (self *PingMessage) AckMessage() Message {
-	return NewPongMessage(self.Nonce)
+	return NewPongMessage(self.Nonce[:])
 }

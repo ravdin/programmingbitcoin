@@ -2,25 +2,27 @@ package network
 
 import (
 	"bytes"
-	"encoding/hex"
+	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"os"
 	"reflect"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 type SimpleNode struct {
-	Socket  net.Conn
-	Testnet bool
-	Logging bool
+	Connection *net.TCPConn
+	Testnet    bool
+	Logging    bool
 }
 
-type NodeConnectOption func(*SimpleNode) net.Conn
+type NodeConnectOption func(*SimpleNode) *net.TCPConn
 type ReceiveMessageTypeOption func() reflect.Type
 
 func WithHostName(host string, ports ...int) NodeConnectOption {
-	return func(node *SimpleNode) net.Conn {
+	return func(node *SimpleNode) *net.TCPConn {
 		var port int
 		if len(ports) == 0 {
 			port = 8333
@@ -30,99 +32,119 @@ func WithHostName(host string, ports ...int) NodeConnectOption {
 		} else {
 			port = ports[0]
 		}
-		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
+		result, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
 		if err != nil {
 			panic(err)
 		}
-		return conn
-	}
-}
-
-func WithConnection(conn net.Conn) NodeConnectOption {
-	return func(node *SimpleNode) net.Conn {
-		return conn
+		return result.(*net.TCPConn)
 	}
 }
 
 func NewSimpleNode(option NodeConnectOption, testnet bool, logging bool) *SimpleNode {
-	result := &SimpleNode{Testnet: testnet, Logging: logging}
-	result.Socket = option(result)
+	result := &SimpleNode{
+		Testnet: testnet,
+		Logging: logging,
+	}
+	result.Connection = option(result)
 	return result
 }
 
-// Send a message to the connected node.
-func (self *SimpleNode) Send(message Message) {
-	envelope := NewEnvelope(message.Command(), message.Serialize(), self.Testnet)
-	if self.Logging {
-		fmt.Fprintf(os.Stdout, "sending: %s\n", hex.EncodeToString(envelope.Serialize()))
-	}
-	self.Socket.Write(envelope.Serialize())
+func (self *SimpleNode) Close() error {
+	return self.Connection.Close()
 }
 
-// Send a message and return a response in a channel.
-func (self *SimpleNode) SendAsync(message Message) (chan Message, chan error) {
-	receivedCh := make(chan Message)
-	errCh := make(chan error)
-	self.Send(message)
-	if tcpconn, ok := self.Socket.(*net.TCPConn); ok {
-		tcpconn.CloseWrite()
-	} else {
-		panic("SendAsync requires a TCP connection!")
+// Do a handshake with the other node.
+// Handshake is sending a version message and getting a verack back.
+func (self *SimpleNode) Handshake() (bool, error) {
+	if ok, err := self.Send(NewVersionMessage(nil)); !ok {
+		return ok, err
 	}
-	go func() {
-		envelope, err := self.Read()
+	verack, err := self.WaitFor(VerackMessageOption())
+	if err != nil {
+		return false, err
+	}
+	if verack == nil {
+		return false, errors.New("No response received!")
+	}
+	return true, nil
+}
+
+// Send a message to the connected node.
+func (self *SimpleNode) Send(message Message) (bool, error) {
+	envelope := NewEnvelope(message.Command(), message.Serialize(), self.Testnet)
+	if self.Logging {
+		fmt.Fprintf(os.Stdout, "sending: %v\n", envelope)
+	}
+	_, err := self.Connection.Write(envelope.Serialize())
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// Read a message from the socket.
+func (self *SimpleNode) Read() (*Envelope, error) {
+	bufCh := make(chan []byte)
+	errCh := make(chan error)
+	go func(conn *net.TCPConn, bufCh chan []byte, errCh chan error) {
+		header := make([]byte, 24)
+		_, err := io.ReadFull(conn, header)
 		if err != nil {
-			fmt.Fprintf(os.Stdout, "Error reading message: %v\n", err)
 			errCh <- err
 			return
 		}
-		received := message.AckMessage()
-		received.Parse(envelope.Stream())
-		receivedCh <- received
-	}()
-	return receivedCh, errCh
+		bufCh <- header
+		payloadLength := int(util.LittleEndianToInt32(header[16:20]))
+		payload := make([]byte, payloadLength)
+		_, err = io.ReadFull(conn, payload)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		bufCh <- payload
+		close(bufCh)
+	}(self.Connection, bufCh, errCh)
+	response := make([]byte, 0)
+	for buf := range bufCh {
+		select {
+		case err := <-errCh:
+			return nil, err
+		default:
+		}
+		response = append(response, buf...)
+	}
+	return ParseEnvelope(bytes.NewReader(response), self.Testnet), nil
 }
 
-func (self *SimpleNode) Read() (*Envelope, error) {
-	data, err := ioutil.ReadAll(self.Socket)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error reading: %v\n", err)
-		return nil, err
-	}
-	if self.Logging {
-		fmt.Fprintf(os.Stdout, "received: %s\n", hex.EncodeToString(data))
-	}
-	reader := bytes.NewReader(data)
-	envelope := ParseEnvelope(reader, self.Testnet)
-	return envelope, nil
-}
-
-func (self *SimpleNode) Receive(messageTypes ...ReceiveMessageTypeOption) Message {
-	envelope, err := self.Read()
-	if err != nil {
-		panic(err)
-	}
-	reader := envelope.Stream()
+// Wait for one of the messages in the list
+func (self *SimpleNode) WaitFor(messageTypes ...ReceiveMessageTypeOption) (Message, error) {
+	commands := make(map[string]Message)
 	for _, option := range messageTypes {
 		messageType := option()
 		message, ok := reflect.New(messageType.Elem()).Interface().(Message)
 		if !ok {
 			panic("Failed to cast to Message type!")
 		}
-		if bytes.Equal(message.Command(), envelope.Command) {
-			message.Parse(reader)
-			response := message.AckMessage()
-			if response != nil {
-				if self.Logging {
-					fmt.Fprintf(os.Stdout, "Received %s, sending %s...\n", message.Command(), response.Command())
-				}
-				self.Send(response)
-				if tcpconn, ok := self.Socket.(*net.TCPConn); ok {
-					tcpconn.CloseWrite()
-				}
-			}
-			return message.Parse(reader)
+		commands[string(message.Command())] = message
+	}
+	for {
+		envelope, err := self.Read()
+		if err != nil {
+			return nil, err
+		}
+		command := string(envelope.Command)
+		if self.Logging {
+			fmt.Fprintf(os.Stdout, "received: %s\n", command)
+		}
+		switch command {
+		case "version":
+			self.Send(NewVerackMessage())
+		case "ping":
+			self.Send(NewPongMessage(envelope.Payload))
+		}
+		if result, ok := commands[command]; ok {
+			result.Parse(envelope.Stream())
+			return result, nil
 		}
 	}
-	return nil
 }

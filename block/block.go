@@ -7,6 +7,12 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+var (
+	GENESIS_BLOCK      []byte = util.HexStringToBytes(`0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c`)
+	TEST_GENESIS_BLOCK []byte = util.HexStringToBytes(`0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4adae5494dffff001d1aa4ae18`)
+	LOWEST_BITS        []byte = util.HexStringToBytes(`ffff001d`)
+)
+
 type Block struct {
 	Version    uint32
 	PrevBlock  [32]byte

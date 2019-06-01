@@ -13,18 +13,18 @@ type GetHeadersMessage struct {
 	EndBlock   [32]byte
 }
 
-var defaultHeaders = map[int]interface{}{
-	VERSION:    uint32(70015),
-	NUM_HASHES: 1,
-}
+const (
+	defaultVersion   uint32 = 70015
+	defaultNumHashes int    = 1
+)
 
 func NewGetHeadersMessage(startBlock []byte) *GetHeadersMessage {
 	var startBlockData [32]byte
 	var endBlockData [32]byte
 	copy(startBlockData[:], startBlock[:32])
 	return &GetHeadersMessage{
-		Version:    defaultHeaders[VERSION].(uint32),
-		NumHashes:  defaultHeaders[NUM_HASHES].(int),
+		Version:    defaultVersion,
+		NumHashes:  defaultNumHashes,
 		StartBlock: startBlockData,
 		EndBlock:   endBlockData,
 	}
@@ -47,7 +47,7 @@ func (self *GetHeadersMessage) Serialize() []byte {
 	copy(result[:4], version)
 	copy(result[4:4+len(numHashes)], numHashes)
 	copy(result[4+len(numHashes):36+len(numHashes)], startBlock)
-	copy(result[36+len(numHashes):68+len(numHashes)], endBlock)
+	copy(result[36+len(numHashes):], endBlock)
 	return result
 }
 
@@ -65,5 +65,5 @@ func (self *GetHeadersMessage) Parse(reader *bytes.Reader) Message {
 }
 
 func (self *GetHeadersMessage) AckMessage() Message {
-	return nil
+	return new(HeadersMessage)
 }

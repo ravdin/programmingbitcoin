@@ -323,6 +323,13 @@ func CalculateNewBits(previousBits []byte, timeDifferential int) []byte {
 	target := BitsToTarget(previousBits)
 	target.Mul(target, big.NewInt(int64(timeDifferential)))
 	target.Div(target, big.NewInt(int64(TWO_WEEKS)))
+
+	var maxTarget = new(big.Int)
+	maxTarget.Lsh(big.NewInt(0xffff), 208)
+	if target.Cmp(maxTarget) > 0 {
+		target = maxTarget
+	}
+
 	// convert the new target to bits
 	return TargetToBits(target)
 }

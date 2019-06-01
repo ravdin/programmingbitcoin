@@ -8,8 +8,10 @@ type PongMessage struct {
 	Nonce [8]byte
 }
 
-func NewPongMessage(nonce [8]byte) *PongMessage {
-	return &PongMessage{Nonce: nonce}
+func NewPongMessage(nonce []byte) *PongMessage {
+	result := new(PongMessage)
+	copy(result.Nonce[:], nonce)
+	return result
 }
 
 func (*PongMessage) Command() []byte {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"os"
 
 	"github.com/ravdin/programmingbitcoin/util"
 )
@@ -29,7 +30,11 @@ func NewEnvelope(command []byte, payload []byte, testnet bool) *Envelope {
 	return &Envelope{Command: command, Payload: payload, Magic: magic}
 }
 
+// Takes a stream and creates a network.Envelope
 func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
+	if reader.Len() == 0 {
+		panic("Connection reset!")
+	}
 	magic := make([]byte, 4)
 	reader.Read(magic)
 	var expectedMagic [4]byte
@@ -47,16 +52,19 @@ func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
 	buffer := make([]byte, 4)
 	reader.Read(buffer)
 	payloadLength := util.LittleEndianToInt32(buffer)
-	reader.Read(buffer)
+	checksum := make([]byte, 4)
+	reader.Read(checksum)
 	payload := make([]byte, payloadLength)
 	reader.Read(payload)
 	// Verify checksum
-	if !bytes.Equal(util.Hash256(payload)[:4], buffer) {
+	if !bytes.Equal(util.Hash256(payload)[:4], checksum) {
+		fmt.Fprintf(os.Stderr, "%x %x\n", util.Hash256(payload)[:4], checksum)
 		panic("Invalid checksum!")
 	}
 	return NewEnvelope(command, payload, testnet)
 }
 
+// Returns the byte serialization of the entire network message
 func (self *Envelope) Serialize() []byte {
 	command := make([]byte, 12)
 	copy(command, self.Command)
