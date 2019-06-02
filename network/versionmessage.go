@@ -180,7 +180,3 @@ func (self *VersionMessage) Parse(reader *bytes.Reader) Message {
 	self.Relay = relay != 0
 	return self
 }
-
-func (self *VersionMessage) AckMessage() Message {
-	return NewVerackMessage()
-}

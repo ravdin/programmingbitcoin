@@ -43,7 +43,3 @@ func (self *HeadersMessage) Parse(reader *bytes.Reader) Message {
 	self.Blocks = blocks
 	return self
 }
-
-func (self *HeadersMessage) AckMessage() Message {
-	return nil
-}

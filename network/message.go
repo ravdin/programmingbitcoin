@@ -9,6 +9,4 @@ type Message interface {
 	Serialize() []byte
 	// Read a message from a byte steam.
 	Parse(reader *bytes.Reader) Message
-	// Message that should be returned after reading an incoming message.
-	AckMessage() Message
 }

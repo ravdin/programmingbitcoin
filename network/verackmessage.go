@@ -29,7 +29,3 @@ func (self *VerackMessage) Serialize() []byte {
 func (self *VerackMessage) Parse(reader *bytes.Reader) Message {
 	return self
 }
-
-func (self *VerackMessage) AckMessage() Message {
-	return nil
-}

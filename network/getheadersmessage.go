@@ -63,7 +63,3 @@ func (self *GetHeadersMessage) Parse(reader *bytes.Reader) Message {
 	copy(self.EndBlock[:], util.ReverseByteArray(blockData))
 	return self
 }
-
-func (self *GetHeadersMessage) AckMessage() Message {
-	return new(HeadersMessage)
-}
