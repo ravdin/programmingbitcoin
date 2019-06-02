@@ -333,3 +333,66 @@ func CalculateNewBits(previousBits []byte, timeDifferential int) []byte {
 	// convert the new target to bits
 	return TargetToBits(target)
 }
+
+//Takes the binary hashes and calculates the hash256
+func MerkleParent(hash1, hash2 []byte) []byte {
+	return Hash256(append(hash1, hash2...))
+}
+
+// Takes a list of binary hashes and returns a list that's half the length
+func MerkleParentLevel(hashes [][]byte) [][]byte {
+	if len(hashes) == 1 {
+		panic("Cannot take a parent level with only 1 item")
+	}
+	length := len(hashes)
+	result := make([][]byte, (length+1)/2)
+	for i, _ := range result {
+		hash1 := hashes[2*i]
+		hash2 := hashes[2*i]
+		if i*2 < length-1 {
+			hash2 = hashes[2*i+1]
+		}
+		result[i] = MerkleParent(hash1, hash2)
+	}
+	return result
+}
+
+// Takes a list of binary hashes and returns the merkle root
+func MerkleRoot(hashes [][]byte) []byte {
+	current := hashes
+	for len(current) > 1 {
+		current = MerkleParentLevel(current)
+	}
+	return current[0]
+}
+
+func BitFieldToBytes(bits []byte) []byte {
+	if len(bits)%8 != 0 {
+		panic("bits does not have a length that is divisible by 8")
+	}
+	result := make([]byte, len(bits)/8)
+	for i, bit := range bits {
+		byteIndex := i / 8
+		bitIndex := uint(i % 8)
+		if bit != 0 {
+			result[byteIndex] |= 1 << bitIndex
+		}
+	}
+	return result
+}
+
+func BytesToBitField(bytes []byte) []byte {
+	result := make([]byte, len(bytes)*8)
+	for byteIndex, b := range bytes {
+		var mask byte = 1
+		bits := make([]byte, 8)
+		for i := 0; i < 8; i++ {
+			if b&mask != 0 {
+				bits[i] = 1
+			}
+			mask <<= 1
+		}
+		copy(result[byteIndex*8:(byteIndex+1)*8], bits)
+	}
+	return result
+}
