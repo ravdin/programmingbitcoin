@@ -20,14 +20,16 @@ type Block struct {
 	Timestamp  uint32
 	Bits       [4]byte
 	Nonce      [4]byte
+	TxHashes   [][]byte
 }
 
-func NewBlock(version uint32, prevBlock []byte, merkleRoot []byte, timestamp uint32, bits []byte, nonce []byte) *Block {
+func NewBlock(version uint32, prevBlock []byte, merkleRoot []byte, timestamp uint32, bits []byte, nonce []byte, txHashes [][]byte) *Block {
 	block := &Block{Version: version, Timestamp: timestamp}
 	copy(block.PrevBlock[:32], prevBlock)
 	copy(block.MerkleRoot[:32], merkleRoot)
 	copy(block.Bits[:4], bits)
 	copy(block.Nonce[:4], nonce)
+	block.TxHashes = txHashes
 	return block
 }
 
@@ -116,4 +118,22 @@ func (self *Block) CheckPow() bool {
 	proof := new(big.Int)
 	proof.SetBytes(sha)
 	return proof.Cmp(self.Target()) < 0
+}
+
+// Gets the merkle root of the tx hashes and checks that it's the same as the merkle root of this block.
+func (self *Block) ValidateMerkleRoot() bool {
+	if self.TxHashes == nil {
+		return false
+	}
+	numHashes := len(self.TxHashes)
+	hashes := make([][]byte, numHashes)
+	// Reverse each item in self.TxHashses
+	for i, hash := range self.TxHashes {
+		hashes[i] = make([]byte, len(hash))
+		copy(hashes[i], hash)
+		util.ReverseByteArray(hashes[i])
+	}
+	root := util.MerkleRoot(hashes)
+	util.ReverseByteArray(root)
+	return bytes.Equal(root, self.MerkleRoot[:])
 }
