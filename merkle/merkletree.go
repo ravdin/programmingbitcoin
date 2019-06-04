@@ -51,7 +51,7 @@ func (self *MerkleTree) String() string {
 }
 
 func (self *MerkleTree) PopulateTree(flagBits []byte, hashes [][]byte) error {
-	for len(self.root()) == 0 {
+	for len(self.Root()) == 0 {
 		if self.isLeaf() {
 			flagBits = flagBits[1:]
 			self.setCurrentNode(hashes[0])
@@ -110,7 +110,7 @@ func (self *MerkleTree) right() {
 	self.CurrentIndex++
 }
 
-func (self *MerkleTree) root() []byte {
+func (self *MerkleTree) Root() []byte {
 	return self.Nodes[0][0]
 }
 

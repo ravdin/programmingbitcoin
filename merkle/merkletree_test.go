@@ -46,7 +46,7 @@ func TestMerkleTree(t *testing.T) {
 		tree := NewMerkleTree(len(hashes))
 		tree.PopulateTree(flagBits, hashes)
 		expected := `597c4bafe3832b17cbbabe56f878f4fc2ad0f6a402cee7fa851a9cb205f87ed1`
-		actual := fmt.Sprintf("%x", tree.root())
+		actual := fmt.Sprintf("%x", tree.Root())
 		if actual != expected {
 			t.Errorf("Expected %s, got %s", expected, actual)
 		}
@@ -67,7 +67,7 @@ func TestMerkleTree(t *testing.T) {
 		tree := NewMerkleTree(len(hashes))
 		tree.PopulateTree(flagBits, hashes)
 		expected := `a8e8bd023169b81bc56854137a135b97ef47a6a7237f4c6e037baed16285a5ab`
-		actual := fmt.Sprintf("%x", tree.root())
+		actual := fmt.Sprintf("%x", tree.Root())
 		if actual != expected {
 			t.Errorf("Expected %s, got %s", expected, actual)
 		}
