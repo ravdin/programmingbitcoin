@@ -7,16 +7,16 @@ import (
 )
 
 type Signature struct {
-	R *big.Int
-	S *big.Int
+	r *big.Int
+	s *big.Int
 }
 
 func NewSignature(r *big.Int, s *big.Int) *Signature {
-	return &Signature{R: r, S: s}
+	return &Signature{r: r, s: s}
 }
 
 func (sig *Signature) String() string {
-	return fmt.Sprintf("Signature(%x,%x)", sig.R, sig.S)
+	return fmt.Sprintf("Signature(%x,%x)", sig.r, sig.s)
 }
 
 func (sig *Signature) Der() []byte {
@@ -32,8 +32,8 @@ func (sig *Signature) Der() []byte {
 		result = append(result, bin...)
 		return result
 	}
-	rbin := encode(sig.R)
-	sbin := encode(sig.S)
+	rbin := encode(sig.r)
+	sbin := encode(sig.s)
 	result := []byte{0x30, byte(len(rbin) + len(sbin))}
 	result = append(result, rbin...)
 	result = append(result, sbin...)

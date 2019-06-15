@@ -14,7 +14,7 @@ var (
 	LowestBits       []byte = util.HexStringToBytes(`ffff001d`)
 )
 
-// Block is a batch of transations.
+// Block is a batch of transactions.
 type Block struct {
 	Version    uint32
 	PrevBlock  [32]byte

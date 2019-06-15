@@ -3,10 +3,11 @@ package script
 import (
 	"bytes"
 	"fmt"
-	"github.com/ravdin/programmingbitcoin/ecc"
-	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 	"os"
+
+	"github.com/ravdin/programmingbitcoin/ecc"
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 func op_0(stack *OpStack, args ...[][]byte) bool {

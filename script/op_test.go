@@ -2,8 +2,9 @@ package script
 
 import (
 	"encoding/hex"
-	"github.com/ravdin/programmingbitcoin/util"
 	"testing"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 func TestOp(t *testing.T) {

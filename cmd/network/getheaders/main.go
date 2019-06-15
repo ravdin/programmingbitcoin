@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-	previous := block.Parse(bytes.NewReader(block.GENESIS_BLOCK))
+	previous := block.Parse(bytes.NewReader(block.GenesisBlock))
 	firstEpochTimestamp := previous.Timestamp
-	expectedBits := block.LOWEST_BITS
+	expectedBits := block.LowestBits
 	count := 1
 	node := network.NewSimpleNode(network.WithHostName("mainnet.programmingbitcoin.com"), false, false)
 	defer node.Close()
@@ -32,10 +32,10 @@ func main() {
 		headers := msg.(*network.HeadersMessage)
 		for _, header := range headers.Blocks {
 			if !header.CheckPow() {
-				panic(fmt.Errorf("bad PoW at block %d\n", count))
+				panic(fmt.Errorf("Bad PoW at block %d\n", count))
 			}
 			if !bytes.Equal(header.PrevBlock[:], previous.Hash()) {
-				panic(fmt.Errorf("discontinuous block at %d\n", count))
+				panic(fmt.Errorf("Discontinuous block at %d\n", count))
 			}
 			if count%2016 == 0 {
 				timeDiff := previous.Timestamp - firstEpochTimestamp
@@ -45,7 +45,7 @@ func main() {
 			}
 			if !bytes.Equal(header.Bits[:], expectedBits) {
 				fmt.Fprintf(os.Stdout, "expected: %x, actual: %x\n", expectedBits, header.Bits[:])
-				panic(fmt.Errorf("bad bits at block %d\n", count))
+				panic(fmt.Errorf("Bad bits at block %d\n", count))
 			}
 			previous = header
 			count++

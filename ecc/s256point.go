@@ -9,8 +9,8 @@ import (
 
 var (
 	G *S256Point
-	A *S256Field
-	B *S256Field
+	A *s256Field
+	B *s256Field
 	N *big.Int
 	P *big.Int
 )
@@ -20,8 +20,8 @@ func init() {
 
 	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
 	P = util.HexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
-	A = NewS256Field(big.NewInt(0), P)
-	B = NewS256Field(big.NewInt(7), P)
+	A = newS256Field(big.NewInt(0), P)
+	B = newS256Field(big.NewInt(7), P)
 
 	x := util.HexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
 	y := util.HexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
@@ -29,16 +29,16 @@ func init() {
 }
 
 type S256Point struct {
-	X *S256Field
-	Y *S256Field
+	X *s256Field
+	Y *s256Field
 }
 
 func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
-	p, err := NewPoint(NewS256Field(x, P), NewS256Field(y, P), A, B)
+	p, err := NewPoint(newS256Field(x, P), newS256Field(y, P), A, B)
 	if err != nil {
 		return nil, err
 	}
-	return &S256Point{X: p.X.(*S256Field), Y: p.Y.(*S256Field)}, nil
+	return &S256Point{X: p.X.(*s256Field), Y: p.Y.(*s256Field)}, nil
 }
 
 // ParseS256Point returns a Point object from a SEC binary (not hex)
@@ -53,105 +53,104 @@ func ParseS256Point(secBin []byte) *S256Point {
 	isEven := secBin[0] == 2
 	xval := new(big.Int)
 	xval.SetBytes(secBin[1:])
-	x := NewS256Field(xval, P)
+	x := newS256Field(xval, P)
 	// right side of the equation y^2 = x^3 + 7
-	alpha := new(S256Field)
+	alpha := new(s256Field)
 	alpha.Pow(x, big.NewInt(3))
 	alpha.Add(alpha, B)
 	// solve for left side
 	beta := alpha.Sqrt()
-	var even_beta, odd_beta *S256Field
+	var evenBeta, oddBeta *s256Field
 	betaOffset := new(big.Int)
 	betaOffset.Sub(P, beta.Num)
 	if beta.Num.Bit(0) == 0 {
-		even_beta = beta
-		odd_beta = NewS256Field(betaOffset, P)
+		evenBeta = beta
+		oddBeta = newS256Field(betaOffset, P)
 	} else {
-		even_beta = NewS256Field(betaOffset, P)
-		odd_beta = beta
+		evenBeta = newS256Field(betaOffset, P)
+		oddBeta = beta
 	}
 	if isEven {
-		return &S256Point{X: x, Y: even_beta}
-	} else {
-		return &S256Point{X: x, Y: odd_beta}
+		return &S256Point{X: x, Y: evenBeta}
 	}
+	return &S256Point{X: x, Y: oddBeta}
 }
 
-func (self *S256Point) Point() *Point {
-	if result, err := NewPoint(self.X, self.Y, A, B); err == nil {
+func (p *S256Point) point() *Point {
+	if result, err := NewPoint(p.X, p.Y, A, B); err == nil {
 		return result
 	}
 	panic("Error casting to Point!")
 }
 
-func (self *S256Point) String() string {
-	if self.X == nil {
+func (p *S256Point) String() string {
+	if p.X == nil {
 		return "Point(infinity)"
 	} else {
-		return fmt.Sprintf("Point(%v,%v)", self.X.Num, self.Y.Num)
+		return fmt.Sprintf("Point(%v,%v)", p.X.Num, p.Y.Num)
 	}
 }
 
-func (self *S256Point) Eq(other *S256Point) bool {
-	if self.X == nil {
+func (p *S256Point) Eq(other *S256Point) bool {
+	if p.X == nil {
 		return other.X == nil
 	}
-	return self.X.Eq(other.X) && self.Y.Eq(other.Y)
+	return p.X.Eq(other.X) && p.Y.Eq(other.Y)
 }
 
-func (self *S256Point) Ne(other *S256Point) bool {
-	return !self.Eq(other)
+func (p *S256Point) Ne(other *S256Point) bool {
+	return !p.Eq(other)
 }
 
 // Set z to p1 + p2 and return z.
-func (z *S256Point) Add(p1, p2 *S256Point) *S256Point {
+func (p *S256Point) Add(p1, p2 *S256Point) *S256Point {
 	result := new(Point)
-	result.Add(p1.Point(), p2.Point())
+	result.Add(p1.point(), p2.point())
 	if result.X == nil && result.Y == nil {
-		*z = S256Point{X: nil, Y: nil}
+		*p = S256Point{X: nil, Y: nil}
 	} else {
-		*z = S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+		*p = S256Point{X: result.X.(*s256Field), Y: result.Y.(*s256Field)}
 	}
-	return z
+	return p
 }
 
-// Set z to c * p and return z.
-func (z *S256Point) Cmul(p *S256Point, coefficient *big.Int) *S256Point {
+// Set z to c * r and return p.
+func (p *S256Point) Cmul(r *S256Point, coefficient *big.Int) *S256Point {
 	coef := new(big.Int)
 	coef.Mod(coefficient, N)
 	result := new(Point)
-	result.Cmul(p.Point(), coef)
+	result.Cmul(r.point(), coef)
 	if result.X == nil && result.Y == nil {
-		*z = S256Point{X: nil, Y: nil}
+		*p = S256Point{X: nil, Y: nil}
 	} else {
-		*z = S256Point{X: result.X.(*S256Field), Y: result.Y.(*S256Field)}
+		*p = S256Point{X: result.X.(*s256Field), Y: result.Y.(*s256Field)}
 	}
-	return z
+	return p
 }
 
-func (self *S256Point) Verify(z *big.Int, sig *Signature) bool {
+func (p *S256Point) Verify(z *big.Int, sig *Signature) bool {
 	// By Fermat's Little Theorem, 1/s = pow(s, N-2, N)
-	s_inv := new(big.Int)
+	sInv := new(big.Int)
 	e := new(big.Int)
 	e.Sub(N, big.NewInt(2))
-	s_inv.Exp(sig.S, e, N)
+	sInv.Exp(sig.s, e, N)
 	// u = z / s
 	u := new(big.Int)
-	u.Mul(z, s_inv).Mod(u, N)
+	u.Mul(z, sInv).Mod(u, N)
 	// v = r / s
 	v := new(big.Int)
-	v.Mul(sig.R, s_inv).Mod(v, N)
+	v.Mul(sig.r, sInv).Mod(v, N)
 	// u*G + v*P should have as the x coordinate, r
 	total := new(S256Point)
 	total.Cmul(G, u)
-	total.Add(total, new(S256Point).Cmul(self, v))
-	return total.X.Num.Cmp(sig.R) == 0
+	total.Add(total, new(S256Point).Cmul(p, v))
+	return total.X.Num.Cmp(sig.r) == 0
 }
 
 // returns the binary version of the SEC format
-func (self *S256Point) Sec(compressed bool) []byte {
-	x := util.IntToBytes(self.X.Num, 32)
-	y := util.IntToBytes(self.Y.Num, 32)
+func (p *S256Point) Sec(compressed bool) []byte {
+	x := util.IntToBytes(p.X.Num, 32)
+	y := util.IntToBytes(p.Y.Num, 32)
 	var result []byte
 	if compressed {
 		result = make([]byte, 33)
@@ -170,12 +169,12 @@ func (self *S256Point) Sec(compressed bool) []byte {
 	return result
 }
 
-func (self *S256Point) Hash160(compressed bool) []byte {
-	return util.Hash160(self.Sec(compressed))
+func (p *S256Point) Hash160(compressed bool) []byte {
+	return util.Hash160(p.Sec(compressed))
 }
 
-func (self *S256Point) Address(compressed bool, testnet bool) string {
-	h160 := self.Hash160(compressed)
+func (p *S256Point) Address(compressed bool, testnet bool) string {
+	h160 := p.Hash160(compressed)
 	var prefix byte
 	if testnet {
 		prefix = 0x6f

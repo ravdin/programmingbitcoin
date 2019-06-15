@@ -23,7 +23,7 @@ func Test256Field(t *testing.T) {
 		for _, test := range tests {
 			a := newS256FieldFromInt64(test[0], 31)
 			b := newS256FieldFromInt64(test[1], 31)
-			actual := new(S256Field).Add(a, b)
+			actual := new(s256Field).Add(a, b)
 			expected := newS256FieldFromInt64(test[2], 31)
 			assertEqual(actual, expected, t)
 		}
@@ -37,7 +37,7 @@ func Test256Field(t *testing.T) {
 		for _, test := range tests {
 			a := newS256FieldFromInt64(test[0], 31)
 			b := newS256FieldFromInt64(test[1], 31)
-			actual := new(S256Field).Sub(a, b)
+			actual := new(s256Field).Sub(a, b)
 			expected := newS256FieldFromInt64(test[2], 31)
 			assertEqual(actual, expected, t)
 		}
@@ -50,7 +50,7 @@ func Test256Field(t *testing.T) {
 		for _, test := range tests {
 			a := newS256FieldFromInt64(test[0], 31)
 			b := newS256FieldFromInt64(test[1], 31)
-			actual := new(S256Field).Mul(a, b)
+			actual := new(s256Field).Mul(a, b)
 			expected := newS256FieldFromInt64(test[2], 31)
 			assertEqual(actual, expected, t)
 		}
@@ -81,7 +81,7 @@ func Test256Field(t *testing.T) {
 			c := big.NewInt(test[2])
 			d := newS256FieldFromInt64(test[3], 31)
 			expected := newS256FieldFromInt64(test[4], 31)
-			actual := new(S256Field)
+			actual := new(s256Field)
 			actual.Div(a, b).Pow(actual, c).Mul(actual, d)
 			assertEqual(actual, expected, t)
 		}
