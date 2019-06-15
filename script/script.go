@@ -155,7 +155,7 @@ func (self *Script) Evaluate(z []byte) bool {
 			// This is an opcode, do what it says.
 			opcode := int(cmd[0])
 			operation := OpCodeFunctions[opcode]
-			fmt.Fprintf(os.Stderr, "Running %s...\n", OpCodeNames[opcode])
+			//fmt.Fprintf(os.Stderr, "Running %s...\n", OpCodeNames[opcode])
 			switch opcode {
 			case 99, 100:
 				// if, notif

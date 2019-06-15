@@ -13,7 +13,7 @@ import (
 )
 
 type txFetcher struct {
-	cache map[string]*Tx
+	cache map[string]*Transaction
 }
 
 var (
@@ -22,27 +22,27 @@ var (
 	once     sync.Once
 )
 
-func NewTxFetcher() *txFetcher {
+func newTxFetcher() *txFetcher {
 	once.Do(func() {
-		instance = &txFetcher{cache: make(map[string]*Tx)}
+		instance = &txFetcher{cache: make(map[string]*Transaction)}
 	})
 
 	return instance
 }
 
-func getUrl(testnet bool) string {
+func getURL(testnet bool) string {
 	if testnet {
 		return "http://testnet.programmingbitcoin.com"
 	}
 	return "http://mainnet.programmingbitcoin.com"
 }
 
-func (self *txFetcher) fetch(txId string, testnet bool, fresh bool) *Tx {
-	if tx, ok := self.cache[txId]; ok && !fresh {
+func (fetcher *txFetcher) fetch(txID string, testnet bool, fresh bool) *Transaction {
+	if tx, ok := fetcher.cache[txID]; ok && !fresh {
 		tx.Testnet = testnet
 		return tx
 	}
-	url := fmt.Sprintf("%s/tx/%s.hex", getUrl(testnet), txId)
+	url := fmt.Sprintf("%s/tx/%s.hex", getURL(testnet), txID)
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
@@ -53,27 +53,27 @@ func (self *txFetcher) fetch(txId string, testnet bool, fresh bool) *Tx {
 	}
 	raw := make([]byte, hex.DecodedLen(len(body)))
 	hex.Decode(raw, body)
-	var tx *Tx
+	var tx *Transaction
 	if raw[4] == 0 {
 		length := len(raw)
 		locktime := util.LittleEndianToInt32(raw[length-4:])
 		copy(raw[4:], raw[6:])
 		reader := bytes.NewReader(raw[:length-2])
-		tx = ParseTx(reader, testnet)
+		tx = ParseTransaction(reader, testnet)
 		tx.Locktime = locktime
 	} else {
 		reader := bytes.NewReader(raw)
-		tx = ParseTx(reader, testnet)
+		tx = ParseTransaction(reader, testnet)
 	}
-	if txId != tx.Id() {
-		panic(fmt.Sprintf("Not the same id: %s vs %s", txId, tx.Id()))
+	if txID != tx.ID() {
+		panic(fmt.Sprintf("Not the same id: %s vs %s", txID, tx.ID()))
 	}
-	self.cache[txId] = tx
+	fetcher.cache[txID] = tx
 	tx.Testnet = testnet
 	return tx
 }
 
-func (self *txFetcher) loadCache(filename string) {
+func (fetcher *txFetcher) loadCache(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)
@@ -85,18 +85,18 @@ func (self *txFetcher) loadCache(filename string) {
 	}
 	for k, rawHex := range v {
 		raw := util.HexStringToBytes(rawHex)
-		var t *Tx
+		var t *Transaction
 		if raw[4] == 0 {
 			tmp := make([]byte, len(raw)-2)
 			copy(tmp[:4], raw[:4])
 			copy(tmp[4:], raw[6:])
 			reader := bytes.NewReader(tmp)
-			t = ParseTx(reader, false)
+			t = ParseTransaction(reader, false)
 			t.Locktime = util.LittleEndianToInt32(tmp[len(tmp)-4:])
 		} else {
 			reader := bytes.NewReader(raw)
-			t = ParseTx(reader, false)
+			t = ParseTransaction(reader, false)
 		}
-		self.cache[k] = t
+		fetcher.cache[k] = t
 	}
 }

@@ -3,8 +3,9 @@ package script
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/ravdin/programmingbitcoin/util"
 	"testing"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 func TestScript(t *testing.T) {
