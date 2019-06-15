@@ -4,11 +4,11 @@ import "testing"
 
 func TestMurmur3(t *testing.T) {
 	tests := map[string][][]uint32{
-		"hello world": [][]uint32{
+		"hello world": {
 			{42, 3926694905},
 			{4221880255, 3771040970},
 		},
-		"goodbye": [][]uint32{
+		"goodbye": {
 			{42, 1987570198},
 			{4221880255, 757891893},
 		},

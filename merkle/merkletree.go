@@ -22,7 +22,7 @@ func NewMerkleTree(total int) *MerkleTree {
 	result.MaxDepth = int(math.Ceil(math.Log2(float64(total))))
 	result.Nodes = make([][][]byte, result.MaxDepth+1)
 	denom := math.Pow(2.0, float64(result.MaxDepth))
-	for i, _ := range result.Nodes {
+	for i := range result.Nodes {
 		numItems := int(math.Ceil(float64(total) / denom))
 		result.Nodes[i] = make([][]byte, numItems)
 		denom /= 2

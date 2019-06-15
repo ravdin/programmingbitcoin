@@ -40,7 +40,7 @@ func TestMerkleTree(t *testing.T) {
 			util.HexStringToBytes("f9dbfafc3af3400954975da24eb325e326960a25b87fffe23eef3e7ed2fb610e"),
 		}
 		flagBits := make([]byte, 31)
-		for i, _ := range flagBits {
+		for i := range flagBits {
 			flagBits[i] = 1
 		}
 		tree := NewMerkleTree(len(hashes))
@@ -61,7 +61,7 @@ func TestMerkleTree(t *testing.T) {
 			util.HexStringToBytes("62af110031e29de1efcad103b3ad4bec7bdcf6cb9c9f4afdd586981795516577"),
 		}
 		flagBits := make([]byte, 11)
-		for i, _ := range flagBits {
+		for i := range flagBits {
 			flagBits[i] = 1
 		}
 		tree := NewMerkleTree(len(hashes))

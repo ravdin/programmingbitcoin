@@ -346,7 +346,7 @@ func MerkleParentLevel(hashes [][]byte) [][]byte {
 	}
 	length := len(hashes)
 	result := make([][]byte, (length+1)/2)
-	for i, _ := range result {
+	for i := range result {
 		hash1 := hashes[2*i]
 		hash2 := hashes[2*i]
 		if i*2 < length-1 {

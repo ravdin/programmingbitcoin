@@ -16,7 +16,7 @@ func TestBloomFilter(t *testing.T) {
 			item := []byte(test[0])
 			expected := test[1]
 			bf.Add(item)
-			actual := fmt.Sprintf("%x", bf.FilterBytes())
+			actual := fmt.Sprintf("%x", bf.filterBytes())
 			if expected != actual {
 				t.Errorf("Expected %s, got %s", expected, actual)
 			}

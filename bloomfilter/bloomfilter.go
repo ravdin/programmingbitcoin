@@ -5,8 +5,10 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
-const BIP37_CONSTANT uint32 = 0xfba4c795
+// Bip37Constant is a seed for BIP0037 bloom filters
+const Bip37Constant uint32 = 0xfba4c795
 
+// BloomFilter is a filter implementation for all possible transactions
 type BloomFilter struct {
 	Size          int
 	BitField      []byte
@@ -14,6 +16,7 @@ type BloomFilter struct {
 	Tweak         uint32
 }
 
+// New creates a new BloomFilter
 func New(size int, functionCount uint32, tweak uint32) *BloomFilter {
 	bitField := make([]byte, size*8)
 	return &BloomFilter{
@@ -25,29 +28,30 @@ func New(size int, functionCount uint32, tweak uint32) *BloomFilter {
 }
 
 // Add an item to the filter
-func (self *BloomFilter) Add(item []byte) {
-	for i := uint32(0); i < self.FunctionCount; i++ {
-		seed := i*BIP37_CONSTANT + self.Tweak
+func (bf *BloomFilter) Add(item []byte) {
+	for i := uint32(0); i < bf.FunctionCount; i++ {
+		seed := i*Bip37Constant + bf.Tweak
 		h := util.Murmur3(item, seed)
-		bit := int(h % uint32(len(self.BitField)))
-		self.BitField[bit] = 1
+		bit := int(h % uint32(len(bf.BitField)))
+		bf.BitField[bit] = 1
 	}
 }
 
-func (self *BloomFilter) FilterBytes() []byte {
-	return util.BitFieldToBytes(self.BitField)
+func (bf *BloomFilter) filterBytes() []byte {
+	return util.BitFieldToBytes(bf.BitField)
 }
 
-func (self *BloomFilter) FilterLoad(flag byte) network.Message {
-	size := util.EncodeVarInt(self.Size)
-	filter := self.FilterBytes()
+// FilterLoad returns the filterload message
+func (bf *BloomFilter) FilterLoad(flag byte) network.Message {
+	size := util.EncodeVarInt(bf.Size)
+	filter := bf.filterBytes()
 	payload := make([]byte, len(size)+len(filter)+9)
 	copy(payload, size)
 	pos := len(size)
 	copy(payload[pos:], filter)
 	pos += len(filter)
-	copy(payload[pos:], util.Int32ToLittleEndian(self.FunctionCount))
-	copy(payload[pos+4:], util.Int32ToLittleEndian(self.Tweak))
+	copy(payload[pos:], util.Int32ToLittleEndian(bf.FunctionCount))
+	copy(payload[pos+4:], util.Int32ToLittleEndian(bf.Tweak))
 	payload[pos+8] = flag
 	return network.NewGenericMessage([]byte("filterload"), payload)
 }

@@ -46,11 +46,11 @@ func NewScript(cmds [][]byte) *Script {
 // Takes a hash160 and returns the p2pkh ScriptPubKey
 func P2pkhScript(h160 []byte) *Script {
 	cmds := [][]byte{
-		[]byte{0x76},
-		[]byte{0xa9},
+		{0x76},
+		{0xa9},
 		h160,
-		[]byte{0x88},
-		[]byte{0xac},
+		{0x88},
+		{0xac},
 	}
 	return NewScript(cmds)
 }

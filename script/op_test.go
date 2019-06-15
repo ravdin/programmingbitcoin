@@ -42,7 +42,7 @@ func TestOp(t *testing.T) {
 		sig2 := util.HexStringToBytes(`3045022100da6bee3c93766232079a01639d07fa869598749729ae323eab8eef53577d611b02207bef15429dcadce2121ea07f233115c6f09034c0be68db99980b9a6c5e75402201`)
 		sec1 := util.HexStringToBytes(`022626e955ea6ea6d98850c994f9107b036b1334f18ca8830bfff1295d21cfdb70`)
 		sec2 := util.HexStringToBytes(`03b287eaf122eea69030a0e9feed096bed8045c8b98bec453e1ffac7fbdbd4bb71`)
-		stack := NewOpStack([][]byte{[]byte{0}, sig1, sig2, []byte{2}, sec1, sec2, []byte{2}})
+		stack := NewOpStack([][]byte{{0}, sig1, sig2, {2}, sec1, sec2, {2}})
 		if !op_checkmultisig(stack, [][]byte{z}) {
 			t.Errorf("OpCheckSig failed!")
 		}

@@ -75,7 +75,7 @@ func (self *MerkleBlock) Parse(reader *bytes.Reader) *MerkleBlock {
 	self.Total = util.LittleEndianToInt32(buffer4)
 	numHashes := util.ReadVarInt(reader)
 	hashes := make([][]byte, numHashes)
-	for i, _ := range hashes {
+	for i := range hashes {
 		reader.Read(buffer32)
 		hashes[i] = make([]byte, 32)
 		copy(hashes[i], util.ReverseByteArray(buffer32))
