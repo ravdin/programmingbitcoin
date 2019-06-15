@@ -7,8 +7,8 @@ import (
 
 func TestVersionMessage(t *testing.T) {
 	args := map[int]interface{}{
-		TIMESTAMP: uint64(0),
-		NONCE:     [8]byte{0, 0, 0, 0, 0, 0, 0, 0},
+		TimestampArg: uint64(0),
+		NonceArg:     [8]byte{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 	message := NewVersionMessage(args)
 	t.Run("test serialize", func(t *testing.T) {

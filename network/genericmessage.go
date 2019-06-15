@@ -4,11 +4,13 @@ import (
 	"bytes"
 )
 
+// GenericMessage represents a "generic" message with a payload.
 type GenericMessage struct {
 	CommandVal []byte
 	Payload    []byte
 }
 
+// NewGenericMessage initializes a GenericMessage object.
 func NewGenericMessage(command []byte, payload []byte) *GenericMessage {
 	return &GenericMessage{
 		CommandVal: command,
@@ -16,14 +18,17 @@ func NewGenericMessage(command []byte, payload []byte) *GenericMessage {
 	}
 }
 
-func (self *GenericMessage) Command() []byte {
-	return self.CommandVal
+// Command sequence that identifies this type of message.
+func (msg *GenericMessage) Command() []byte {
+	return msg.CommandVal
 }
 
-func (self *GenericMessage) Serialize() []byte {
-	return self.Payload
+// Serialize this message to send over the network.
+func (msg *GenericMessage) Serialize() []byte {
+	return msg.Payload
 }
 
-func (self *GenericMessage) Parse(reader *bytes.Reader) Message {
+// Parse a message from a byte steam.
+func (msg *GenericMessage) Parse(reader *bytes.Reader) Message {
 	panic("Not implemented!")
 }

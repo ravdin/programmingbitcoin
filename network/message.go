@@ -2,11 +2,9 @@ package network
 
 import "bytes"
 
+// Message defines a common interface for all messages.
 type Message interface {
-	// Command sequence that identifies this type of message.
 	Command() []byte
-	// Serialize this message to send over the network
 	Serialize() []byte
-	// Read a message from a byte steam.
 	Parse(reader *bytes.Reader) Message
 }

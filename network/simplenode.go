@@ -12,15 +12,21 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// SimpleNode is a utility class for creating a TCP connection to a bitcoin network.
 type SimpleNode struct {
 	Connection *net.TCPConn
 	Testnet    bool
 	Logging    bool
 }
 
+// NodeConnectOption is an alias for a function that returns a TCP connection.
 type NodeConnectOption func(*SimpleNode) *net.TCPConn
+
+// ReceiveMessageTypeOption is an alias for a function that returns a Message type.
 type ReceiveMessageTypeOption func() reflect.Type
 
+// WithHostName returns a function for initializing a TCP connection from a host name.
+// If no port is passed, use a default. If multiple port numbers are passed, use the first one.
 func WithHostName(host string, ports ...int) NodeConnectOption {
 	return func(node *SimpleNode) *net.TCPConn {
 		var port int
@@ -40,6 +46,10 @@ func WithHostName(host string, ports ...int) NodeConnectOption {
 	}
 }
 
+// NewSimpleNode creates a SimpleNode and initializes a TCP connection.
+// option: function for returning a TCPConn from a SimpleNode.
+// testnet: Indicate if the node should connect to a testnet.
+// logging: Set to true for more verbose messages to standard out.
 func NewSimpleNode(option NodeConnectOption, testnet bool, logging bool) *SimpleNode {
 	result := &SimpleNode{
 		Testnet: testnet,
@@ -49,33 +59,33 @@ func NewSimpleNode(option NodeConnectOption, testnet bool, logging bool) *Simple
 	return result
 }
 
-func (self *SimpleNode) Close() error {
-	return self.Connection.Close()
+// Close the connection.
+func (node *SimpleNode) Close() error {
+	return node.Connection.Close()
 }
 
-// Do a handshake with the other node.
 // Handshake is sending a version message and getting a verack back.
-func (self *SimpleNode) Handshake() (bool, error) {
-	if ok, err := self.Send(NewVersionMessage(nil)); !ok {
+func (node *SimpleNode) Handshake() (bool, error) {
+	if ok, err := node.Send(NewVersionMessage(nil)); !ok {
 		return ok, err
 	}
-	verack, err := self.WaitFor(VerackMessageOption())
+	verack, err := node.WaitFor(VerackMessageOption())
 	if err != nil {
 		return false, err
 	}
 	if verack == nil {
-		return false, errors.New("No response received!")
+		return false, errors.New("no response received")
 	}
 	return true, nil
 }
 
 // Send a message to the connected node.
-func (self *SimpleNode) Send(message Message) (bool, error) {
-	envelope := NewEnvelope(message.Command(), message.Serialize(), self.Testnet)
-	if self.Logging {
+func (node *SimpleNode) Send(message Message) (bool, error) {
+	envelope := NewEnvelope(message.Command(), message.Serialize(), node.Testnet)
+	if node.Logging {
 		fmt.Fprintf(os.Stdout, "sending: %v\n", envelope)
 	}
-	_, err := self.Connection.Write(envelope.Serialize())
+	_, err := node.Connection.Write(envelope.Serialize())
 	if err != nil {
 		return false, err
 	}
@@ -83,7 +93,7 @@ func (self *SimpleNode) Send(message Message) (bool, error) {
 }
 
 // Read a message from the socket.
-func (self *SimpleNode) Read() (*Envelope, error) {
+func (node *SimpleNode) Read() (*Envelope, error) {
 	bufCh := make(chan []byte)
 	errCh := make(chan error)
 	go func(conn *net.TCPConn, bufCh chan []byte, errCh chan error) {
@@ -103,7 +113,7 @@ func (self *SimpleNode) Read() (*Envelope, error) {
 		}
 		bufCh <- payload
 		close(bufCh)
-	}(self.Connection, bufCh, errCh)
+	}(node.Connection, bufCh, errCh)
 	response := make([]byte, 0)
 	for buf := range bufCh {
 		select {
@@ -113,11 +123,12 @@ func (self *SimpleNode) Read() (*Envelope, error) {
 		}
 		response = append(response, buf...)
 	}
-	return ParseEnvelope(bytes.NewReader(response), self.Testnet), nil
+	return ParseEnvelope(bytes.NewReader(response), node.Testnet), nil
 }
 
-// Wait for one of the messages in the list
-func (self *SimpleNode) WaitFor(messageTypes ...ReceiveMessageTypeOption) (Message, error) {
+// WaitFor waits for one of the messages in the list
+// Return a Message if successful and an error otherwise.
+func (node *SimpleNode) WaitFor(messageTypes ...ReceiveMessageTypeOption) (Message, error) {
 	commands := make(map[string]Message)
 	for _, option := range messageTypes {
 		messageType := option()
@@ -128,19 +139,19 @@ func (self *SimpleNode) WaitFor(messageTypes ...ReceiveMessageTypeOption) (Messa
 		commands[string(message.Command())] = message
 	}
 	for {
-		envelope, err := self.Read()
+		envelope, err := node.Read()
 		if err != nil {
 			return nil, err
 		}
 		command := string(envelope.Command)
-		if self.Logging {
+		if node.Logging {
 			fmt.Fprintf(os.Stdout, "received: %s\n", command)
 		}
 		switch command {
 		case "version":
-			self.Send(NewVerackMessage())
+			node.Send(NewVerackMessage())
 		case "ping":
-			self.Send(NewPongMessage(envelope.Payload))
+			node.Send(NewPongMessage(envelope.Payload))
 		}
 		if result, ok := commands[command]; ok {
 			result.Parse(envelope.Stream())

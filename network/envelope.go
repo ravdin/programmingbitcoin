@@ -9,6 +9,7 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// Envelope wraps a network message.
 type Envelope struct {
 	Command []byte
 	Payload []byte
@@ -16,21 +17,22 @@ type Envelope struct {
 }
 
 var (
-	NETWORK_MAGIC      = [4]byte{0xf9, 0xbe, 0xb4, 0xd9}
-	TEST_NETWORK_MAGIC = [4]byte{0x0b, 0x11, 0x09, 0x07}
+	networkMagic     = [4]byte{0xf9, 0xbe, 0xb4, 0xd9}
+	testNetworkMagic = [4]byte{0x0b, 0x11, 0x09, 0x07}
 )
 
+// NewEnvelope initializes a new Envelope.
 func NewEnvelope(command []byte, payload []byte, testnet bool) *Envelope {
 	var magic [4]byte
 	if testnet {
-		magic = TEST_NETWORK_MAGIC
+		magic = testNetworkMagic
 	} else {
-		magic = NETWORK_MAGIC
+		magic = networkMagic
 	}
 	return &Envelope{Command: command, Payload: payload, Magic: magic}
 }
 
-// Takes a stream and creates a network.Envelope
+// ParseEnvelope takes a stream and creates a network.Envelope
 func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
 	if reader.Len() == 0 {
 		panic("Connection reset!")
@@ -39,9 +41,9 @@ func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
 	reader.Read(magic)
 	var expectedMagic [4]byte
 	if testnet {
-		expectedMagic = TEST_NETWORK_MAGIC
+		expectedMagic = testNetworkMagic
 	} else {
-		expectedMagic = NETWORK_MAGIC
+		expectedMagic = networkMagic
 	}
 	if !bytes.Equal(magic[:], expectedMagic[:]) {
 		panic(fmt.Sprintf("magic is not right %v vs %v", hex.EncodeToString(magic[:]), hex.EncodeToString(expectedMagic[:])))
@@ -64,25 +66,26 @@ func ParseEnvelope(reader *bytes.Reader, testnet bool) *Envelope {
 	return NewEnvelope(command, payload, testnet)
 }
 
-// Returns the byte serialization of the entire network message
-func (self *Envelope) Serialize() []byte {
+// Serialize returns the byte serialization of the entire network message
+func (env *Envelope) Serialize() []byte {
 	command := make([]byte, 12)
-	copy(command, self.Command)
-	payloadLength := len(self.Payload)
-	checksum := util.Hash256(self.Payload)[:4]
+	copy(command, env.Command)
+	payloadLength := len(env.Payload)
+	checksum := util.Hash256(env.Payload)[:4]
 	result := make([]byte, payloadLength+24)
-	copy(result[:4], self.Magic[:])
+	copy(result[:4], env.Magic[:])
 	copy(result[4:16], command)
 	copy(result[16:20], util.Int32ToLittleEndian(uint32(payloadLength)))
 	copy(result[20:24], checksum)
-	copy(result[24:], self.Payload)
+	copy(result[24:], env.Payload)
 	return result
 }
 
-func (self *Envelope) String() string {
-	return fmt.Sprintf("%s: %s", string(self.Command), hex.EncodeToString(self.Payload))
+func (env *Envelope) String() string {
+	return fmt.Sprintf("%s: %s", string(env.Command), hex.EncodeToString(env.Payload))
 }
 
-func (self *Envelope) Stream() *bytes.Reader {
-	return bytes.NewReader(self.Payload)
+// Stream opens a new Reader for the payload's bytes.
+func (env *Envelope) Stream() *bytes.Reader {
+	return bytes.NewReader(env.Payload)
 }

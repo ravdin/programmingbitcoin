@@ -8,15 +8,16 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// VersionMessage represents a "version" message.
 type VersionMessage struct {
 	Version          uint32
 	Services         uint64
 	Timestamp        uint64
 	ReceiverServices uint64
-	ReceiverIp       [4]byte
+	ReceiverIP       [4]byte
 	ReceiverPort     uint16
 	SenderServices   uint64
-	SenderIp         [4]byte
+	SenderIP         [4]byte
 	SenderPort       uint16
 	Nonce            [8]byte
 	UserAgent        string
@@ -24,38 +25,41 @@ type VersionMessage struct {
 	Relay            bool
 }
 
+// Constants that represent the fields in a VersionMessage.
 const (
-	VERSION = iota
-	SERVICES
-	TIMESTAMP
-	RECEIVER_SERVICES
-	RECEIVER_IP
-	RECEIVER_PORT
-	SENDER_SERVICES
-	SENDER_IP
-	SENDER_PORT
-	NONCE
-	USER_AGENT
-	LATEST_BLOCK
-	RELAY
+	VersionArg = iota
+	ServicesArg
+	TimestampArg
+	ReceiverServicesArg
+	ReceiverIPArg
+	ReceiverPortArg
+	SenderServicesArg
+	SenderIPArg
+	SenderPortArg
+	NonceArg
+	UserAgentArg
+	LatestBlockArg
+	RelayArg
 )
 
 var defaultValues = map[int]interface{}{
-	VERSION:           uint32(70015),
-	SERVICES:          uint64(0),
-	TIMESTAMP:         nil,
-	RECEIVER_SERVICES: uint64(0),
-	RECEIVER_IP:       [4]byte{0, 0, 0, 0},
-	RECEIVER_PORT:     uint16(8333),
-	SENDER_SERVICES:   uint64(0),
-	SENDER_IP:         [4]byte{0, 0, 0, 0},
-	SENDER_PORT:       uint16(8333),
-	NONCE:             nil,
-	USER_AGENT:        "/programmingbitcoin:0.1/",
-	LATEST_BLOCK:      uint32(0),
-	RELAY:             false,
+	VersionArg:          uint32(70015),
+	ServicesArg:         uint64(0),
+	TimestampArg:        nil,
+	ReceiverServicesArg: uint64(0),
+	ReceiverIPArg:       [4]byte{0, 0, 0, 0},
+	ReceiverPortArg:     uint16(8333),
+	SenderServicesArg:   uint64(0),
+	SenderIPArg:         [4]byte{0, 0, 0, 0},
+	SenderPortArg:       uint16(8333),
+	NonceArg:            nil,
+	UserAgentArg:        "/programmingbitcoin:0.1/",
+	LatestBlockArg:      uint32(0),
+	RelayArg:            false,
 }
 
+// NewVersionMessage initializes a VersionMessage object.
+// args: map of initialization values. Use this to override the default values.
 func NewVersionMessage(args map[int]interface{}) *VersionMessage {
 	values := make(map[int]interface{})
 	for k, v := range defaultValues {
@@ -66,117 +70,119 @@ func NewVersionMessage(args map[int]interface{}) *VersionMessage {
 			values[k] = v
 		}
 	}
-	if values[TIMESTAMP] == nil {
-		values[TIMESTAMP] = uint64(time.Now().Unix())
+	if values[TimestampArg] == nil {
+		values[TimestampArg] = uint64(time.Now().Unix())
 	}
-	if values[NONCE] == nil {
+	if values[NonceArg] == nil {
 		var nonce [8]byte
 		copy(nonce[:], util.Int64ToLittleEndian(rand.Uint64()))
-		values[NONCE] = nonce
+		values[NonceArg] = nonce
 	}
 	return &VersionMessage{
-		Version:          values[VERSION].(uint32),
-		Services:         values[SERVICES].(uint64),
-		Timestamp:        values[TIMESTAMP].(uint64),
-		ReceiverServices: values[RECEIVER_SERVICES].(uint64),
-		ReceiverIp:       values[RECEIVER_IP].([4]byte),
-		ReceiverPort:     values[RECEIVER_PORT].(uint16),
-		SenderServices:   values[SENDER_SERVICES].(uint64),
-		SenderIp:         values[SENDER_IP].([4]byte),
-		SenderPort:       values[SENDER_PORT].(uint16),
-		Nonce:            values[NONCE].([8]byte),
-		UserAgent:        values[USER_AGENT].(string),
-		LatestBlock:      values[LATEST_BLOCK].(uint32),
-		Relay:            values[RELAY].(bool),
+		Version:          values[VersionArg].(uint32),
+		Services:         values[ServicesArg].(uint64),
+		Timestamp:        values[TimestampArg].(uint64),
+		ReceiverServices: values[ReceiverServicesArg].(uint64),
+		ReceiverIP:       values[ReceiverIPArg].([4]byte),
+		ReceiverPort:     values[ReceiverPortArg].(uint16),
+		SenderServices:   values[SenderServicesArg].(uint64),
+		SenderIP:         values[SenderIPArg].([4]byte),
+		SenderPort:       values[SenderPortArg].(uint16),
+		Nonce:            values[NonceArg].([8]byte),
+		UserAgent:        values[UserAgentArg].(string),
+		LatestBlock:      values[LatestBlockArg].(uint32),
+		Relay:            values[RelayArg].(bool),
 	}
 }
 
+// Command sequence that identifies this type of message.
 func (*VersionMessage) Command() []byte {
 	return []byte("version")
 }
 
 // Serialize this message to send over the network
-func (self *VersionMessage) Serialize() []byte {
-	version := util.Int32ToLittleEndian(self.Version)
-	services := util.Int64ToLittleEndian(self.Services)
-	timestamp := util.Int64ToLittleEndian(self.Timestamp)
-	receiverServices := util.Int64ToLittleEndian(self.ReceiverServices)
-	receiverIp := make([]byte, 16)
-	copy(receiverIp[10:12], []byte{0xff, 0xff})
-	copy(receiverIp[12:], self.ReceiverIp[:])
-	receiverPort := util.Int16ToLittleEndian(self.ReceiverPort)
-	senderServices := util.Int64ToLittleEndian(self.SenderServices)
-	senderIp := make([]byte, 16)
-	copy(senderIp[10:12], []byte{0xff, 0xff})
-	copy(senderIp[12:], self.SenderIp[:])
-	senderPort := util.Int16ToLittleEndian(self.SenderPort)
-	userAgentLength := util.EncodeVarInt(len(self.UserAgent))
-	latestBlock := util.Int32ToLittleEndian(self.LatestBlock)
-	var relay byte = 0
-	if self.Relay {
+func (msg *VersionMessage) Serialize() []byte {
+	version := util.Int32ToLittleEndian(msg.Version)
+	services := util.Int64ToLittleEndian(msg.Services)
+	timestamp := util.Int64ToLittleEndian(msg.Timestamp)
+	receiverServices := util.Int64ToLittleEndian(msg.ReceiverServices)
+	receiverIP := make([]byte, 16)
+	copy(receiverIP[10:12], []byte{0xff, 0xff})
+	copy(receiverIP[12:], msg.ReceiverIP[:])
+	receiverPort := util.Int16ToLittleEndian(msg.ReceiverPort)
+	senderServices := util.Int64ToLittleEndian(msg.SenderServices)
+	senderIP := make([]byte, 16)
+	copy(senderIP[10:12], []byte{0xff, 0xff})
+	copy(senderIP[12:], msg.SenderIP[:])
+	senderPort := util.Int16ToLittleEndian(msg.SenderPort)
+	userAgentLength := util.EncodeVarInt(len(msg.UserAgent))
+	latestBlock := util.Int32ToLittleEndian(msg.LatestBlock)
+	var relay byte
+	if msg.Relay {
 		relay = 1
 	}
-	serializedLength := 85 + len(userAgentLength) + len(self.UserAgent)
+	serializedLength := 85 + len(userAgentLength) + len(msg.UserAgent)
 	result := make([]byte, serializedLength)
 	copy(result[:4], version)
 	copy(result[4:12], services)
 	copy(result[12:20], timestamp)
 	copy(result[20:28], receiverServices)
-	copy(result[28:44], receiverIp)
+	copy(result[28:44], receiverIP)
 	copy(result[44:46], receiverPort)
 	copy(result[46:54], senderServices)
-	copy(result[54:70], senderIp)
+	copy(result[54:70], senderIP)
 	copy(result[70:72], senderPort)
-	copy(result[72:80], self.Nonce[:])
+	copy(result[72:80], msg.Nonce[:])
 	copy(result[80:80+len(userAgentLength)], userAgentLength)
 	pos := 80 + len(userAgentLength)
-	copy(result[pos:pos+len(self.UserAgent)], []byte(self.UserAgent))
-	pos += len(self.UserAgent)
+	copy(result[pos:pos+len(msg.UserAgent)], []byte(msg.UserAgent))
+	pos += len(msg.UserAgent)
 	copy(result[pos:pos+4], latestBlock)
 	pos += 4
 	result[pos] = relay
 	return result
 }
 
-func (self *VersionMessage) Parse(reader *bytes.Reader) Message {
+// Parse a message from a byte steam.
+func (msg *VersionMessage) Parse(reader *bytes.Reader) Message {
 	version := make([]byte, 4)
 	reader.Read(version)
-	self.Version = util.LittleEndianToInt32(version)
+	msg.Version = util.LittleEndianToInt32(version)
 	services := make([]byte, 8)
 	reader.Read(services)
-	self.Services = util.LittleEndianToInt64(services)
+	msg.Services = util.LittleEndianToInt64(services)
 	timestamp := make([]byte, 8)
 	reader.Read(timestamp)
-	self.Timestamp = util.LittleEndianToInt64(timestamp)
+	msg.Timestamp = util.LittleEndianToInt64(timestamp)
 	receiverServices := make([]byte, 8)
 	reader.Read(receiverServices)
-	self.ReceiverServices = util.LittleEndianToInt64(receiverServices)
-	receiverIp := make([]byte, 16)
-	reader.Read(receiverIp)
-	copy(self.ReceiverIp[:], receiverIp[12:])
+	msg.ReceiverServices = util.LittleEndianToInt64(receiverServices)
+	receiverIP := make([]byte, 16)
+	reader.Read(receiverIP)
+	copy(msg.ReceiverIP[:], receiverIP[12:])
 	receiverPort := make([]byte, 2)
 	reader.Read(receiverPort)
-	self.ReceiverPort = util.LittleEndianToInt16(receiverPort)
+	msg.ReceiverPort = util.LittleEndianToInt16(receiverPort)
 	senderServices := make([]byte, 8)
 	reader.Read(senderServices)
-	self.ReceiverServices = util.LittleEndianToInt64(senderServices)
-	senderIp := make([]byte, 16)
-	reader.Read(senderIp)
-	copy(self.SenderIp[:], senderIp[12:])
+	msg.ReceiverServices = util.LittleEndianToInt64(senderServices)
+	senderIP := make([]byte, 16)
+	reader.Read(senderIP)
+	copy(msg.SenderIP[:], senderIP[12:])
 	senderPort := make([]byte, 2)
 	reader.Read(senderPort)
-	self.SenderPort = util.LittleEndianToInt16(senderPort)
+	msg.SenderPort = util.LittleEndianToInt16(senderPort)
 	nonce := make([]byte, 8)
 	reader.Read(nonce)
-	copy(self.Nonce[:], nonce)
+	copy(msg.Nonce[:], nonce)
 	userAgentLength := util.ReadVarInt(reader)
 	userAgent := make([]byte, userAgentLength)
 	reader.Read(userAgent)
-	self.UserAgent = string(userAgent)
+	msg.UserAgent = string(userAgent)
 	latestBlock := make([]byte, 4)
 	reader.Read(latestBlock)
-	self.LatestBlock = util.LittleEndianToInt32(latestBlock)
+	msg.LatestBlock = util.LittleEndianToInt32(latestBlock)
 	relay, _ := reader.ReadByte()
-	self.Relay = relay != 0
-	return self
+	msg.Relay = relay != 0
+	return msg
 }
