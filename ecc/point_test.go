@@ -87,60 +87,60 @@ func newPointAtInfinity(a int64, b int64) (*Point, error) {
 	return NewPoint(nil, nil, newIntWrapper(a), newIntWrapper(b))
 }
 
-func (self *intWrapper) Eq(other FieldInteger) bool {
+func (i *intWrapper) Eq(other FieldInteger) bool {
 	o := other.(*intWrapper)
-	return self.n == o.n
+	return i.n == o.n
 }
 
-func (self *intWrapper) Ne(other FieldInteger) bool {
+func (i *intWrapper) Ne(other FieldInteger) bool {
 	o := other.(*intWrapper)
-	return self.n != o.n
+	return i.n != o.n
 }
 
-func (z *intWrapper) Add(x, y FieldInteger) FieldInteger {
+func (i *intWrapper) Add(x, y FieldInteger) FieldInteger {
 	intx, inty := x.(*intWrapper), y.(*intWrapper)
-	*z = intWrapper{n: intx.n + inty.n}
-	return z
+	*i = intWrapper{n: intx.n + inty.n}
+	return i
 }
 
-func (z *intWrapper) Sub(x, y FieldInteger) FieldInteger {
+func (i *intWrapper) Sub(x, y FieldInteger) FieldInteger {
 	intx, inty := x.(*intWrapper), y.(*intWrapper)
-	*z = intWrapper{n: intx.n - inty.n}
-	return z
+	*i = intWrapper{n: intx.n - inty.n}
+	return i
 }
 
-func (z *intWrapper) Mul(x, y FieldInteger) FieldInteger {
+func (i *intWrapper) Mul(x, y FieldInteger) FieldInteger {
 	intx, inty := x.(*intWrapper), y.(*intWrapper)
-	*z = intWrapper{n: intx.n * inty.n}
-	return z
+	*i = intWrapper{n: intx.n * inty.n}
+	return i
 }
 
-func (z *intWrapper) Div(x, y FieldInteger) FieldInteger {
+func (i *intWrapper) Div(x, y FieldInteger) FieldInteger {
 	intx, inty := x.(*intWrapper), y.(*intWrapper)
-	*z = intWrapper{n: intx.n / inty.n}
-	return z
+	*i = intWrapper{n: intx.n / inty.n}
+	return i
 }
 
-func (z *intWrapper) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
+func (i *intWrapper) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
 	field := n.(*intWrapper)
 	result := new(big.Int)
 	result.Exp(big.NewInt(field.n), exponent, nil)
-	*z = intWrapper{n: result.Int64()}
-	return z
+	*i = intWrapper{n: result.Int64()}
+	return i
 }
 
-func (z *intWrapper) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
+func (i *intWrapper) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
 	field := n.(*intWrapper)
-	*z = intWrapper{n: coefficient.Int64() * field.n}
-	return z
+	*i = intWrapper{n: coefficient.Int64() * field.n}
+	return i
 }
 
-func (z *intWrapper) Copy() FieldInteger {
-	return &intWrapper{n: z.n}
+func (i *intWrapper) Copy() FieldInteger {
+	return &intWrapper{n: i.n}
 }
 
-func (z *intWrapper) Set(n FieldInteger) FieldInteger {
+func (i *intWrapper) Set(n FieldInteger) FieldInteger {
 	field := n.(*intWrapper)
-	z.n = field.n
-	return z
+	i.n = field.n
+	return i
 }

@@ -6,89 +6,89 @@ import (
 )
 
 // Finite field impmentation for testing. This type has a limit of 64 bits.
-type FieldElement struct {
+type fieldElement struct {
 	Num   int64
 	Prime int64
 }
 
-func NewFieldElement(num int64, prime int64) *FieldElement {
+func newFieldElement(num int64, prime int64) *fieldElement {
 	if num >= prime || num < 0 {
 		panic(fmt.Sprintf("Num %d not in field range 0 to %d", num, prime-1))
 	}
-	return &FieldElement{Num: num, Prime: prime}
+	return &fieldElement{Num: num, Prime: prime}
 }
 
-func (self *FieldElement) String() string {
-	return fmt.Sprintf("FieldElement_%d(%d)", self.Prime, self.Num)
+func (elem *fieldElement) String() string {
+	return fmt.Sprintf("FieldElement_%d(%d)", elem.Prime, elem.Num)
 }
 
-func (self *FieldElement) Eq(other FieldInteger) bool {
-	o := other.(*FieldElement)
-	return self.Num == o.Num && self.Prime == o.Prime
+func (elem *fieldElement) Eq(other FieldInteger) bool {
+	o := other.(*fieldElement)
+	return elem.Num == o.Num && elem.Prime == o.Prime
 }
 
-func (self *FieldElement) Ne(other FieldInteger) bool {
-	o := other.(*FieldElement)
-	return self.Num != o.Num || self.Prime != o.Prime
+func (elem *fieldElement) Ne(other FieldInteger) bool {
+	o := other.(*fieldElement)
+	return elem.Num != o.Num || elem.Prime != o.Prime
 }
 
-func (z *FieldElement) Add(x, y FieldInteger) FieldInteger {
-	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+func (elem *fieldElement) Add(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*fieldElement), y.(*fieldElement)
 	if elemx.Prime != elemy.Prime {
 		panic("Cannot add two numbers in different Fields")
 	}
 	num := (elemx.Num + elemy.Num) % elemx.Prime
-	*z = FieldElement{Num: num, Prime: elemx.Prime}
-	return z
+	*elem = fieldElement{Num: num, Prime: elemx.Prime}
+	return elem
 }
 
-func (z *FieldElement) Sub(x, y FieldInteger) FieldInteger {
-	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+func (elem *fieldElement) Sub(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*fieldElement), y.(*fieldElement)
 	if elemx.Prime != elemy.Prime {
 		panic("Cannot subtract two numbers in different Fields")
 	}
 	num := (elemx.Num - elemy.Num + elemx.Prime) % elemx.Prime
-	*z = FieldElement{Num: num, Prime: elemx.Prime}
-	return z
+	*elem = fieldElement{Num: num, Prime: elemx.Prime}
+	return elem
 }
 
-func (z *FieldElement) Mul(x, y FieldInteger) FieldInteger {
-	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+func (elem *fieldElement) Mul(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*fieldElement), y.(*fieldElement)
 	if elemx.Prime != elemy.Prime {
 		panic("Cannot multiply two numbers in different Fields")
 	}
 	num := (elemx.Num * elemy.Num) % elemx.Prime
-	*z = FieldElement{Num: num, Prime: elemx.Prime}
-	return z
+	*elem = fieldElement{Num: num, Prime: elemx.Prime}
+	return elem
 }
 
-func (z *FieldElement) Div(x, y FieldInteger) FieldInteger {
-	elemx, elemy := x.(*FieldElement), y.(*FieldElement)
+func (elem *fieldElement) Div(x, y FieldInteger) FieldInteger {
+	elemx, elemy := x.(*fieldElement), y.(*fieldElement)
 	if elemx.Prime != elemy.Prime {
 		panic("Cannot divide two numbers in different Fields")
 	}
 	num := (elemx.Num * intPow(elemy.Num, elemx.Prime-2, elemx.Prime)) % elemx.Prime
-	*z = FieldElement{Num: num, Prime: elemx.Prime}
-	return z
+	*elem = fieldElement{Num: num, Prime: elemx.Prime}
+	return elem
 }
 
-func (z *FieldElement) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
-	field := n.(*FieldElement)
+func (elem *fieldElement) Pow(n FieldInteger, exponent *big.Int) FieldInteger {
+	field := n.(*fieldElement)
 	e := (exponent.Int64() + field.Prime - 1) % (field.Prime - 1)
 	num := intPow(field.Num, e, field.Prime)
-	*z = FieldElement{Num: num, Prime: field.Prime}
-	return z
+	*elem = fieldElement{Num: num, Prime: field.Prime}
+	return elem
 }
 
-func (z *FieldElement) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
+func (elem *fieldElement) Cmul(n FieldInteger, coefficient *big.Int) FieldInteger {
 	panic("Not implemented")
 }
 
-func (z *FieldElement) Copy() FieldInteger {
+func (elem *fieldElement) Copy() FieldInteger {
 	panic("Not implemented")
 }
 
-func (z *FieldElement) Set(n FieldInteger) FieldInteger {
+func (elem *fieldElement) Set(n FieldInteger) FieldInteger {
 	panic("Not implemented")
 }
 

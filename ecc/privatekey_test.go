@@ -1,10 +1,11 @@
 package ecc
 
 import (
-	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
 	"math/rand"
 	"testing"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 func TestPrivateKey(t *testing.T) {

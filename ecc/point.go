@@ -1,11 +1,11 @@
 package ecc
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 )
 
+// Point represents a point in an elliptic curve.
 type Point struct {
 	X FieldInteger
 	Y FieldInteger
@@ -13,6 +13,7 @@ type Point struct {
 	B FieldInteger
 }
 
+// NewPoint returns a Point.
 func NewPoint(x FieldInteger, y FieldInteger, a FieldInteger, b FieldInteger) (*Point, error) {
 	if x == nil && y == nil {
 		return &Point{X: nil, Y: nil, A: a, B: b}, nil
@@ -22,35 +23,36 @@ func NewPoint(x FieldInteger, y FieldInteger, a FieldInteger, b FieldInteger) (*
 	left.Pow(left, big.NewInt(2))
 	right.Pow(right, big.NewInt(3)).Add(right, x.Copy().Mul(x, a)).Add(right, b)
 	if !left.Eq(right) {
-		return nil, errors.New(fmt.Sprintf("(%d, %d) is not on the curve", x, y))
+		return nil, fmt.Errorf("(%d, %d) is not on the curve", x, y)
 	}
 	return &Point{X: x, Y: y, A: a, B: b}, nil
 }
 
-func (self *Point) String() string {
-	if self.X == nil {
+func (p *Point) String() string {
+	if p.X == nil {
 		return "Point(infinity)"
-	} else {
-		return fmt.Sprintf("Point(%v,%v)_%v_%v", self.X, self.Y, self.A, self.B)
 	}
+	return fmt.Sprintf("Point(%v,%v)_%v_%v", p.X, p.Y, p.A, p.B)
 }
 
-func (self *Point) Eq(other *Point) bool {
-	if self.X == nil {
+// Eq returns true if the points are equal.
+func (p *Point) Eq(other *Point) bool {
+	if p.X == nil {
 		return other.X == nil
 	}
-	return self.X.Eq(other.X) &&
-		self.Y.Eq(other.Y) &&
-		self.A.Eq(other.A) &&
-		self.B.Eq(other.B)
+	return p.X.Eq(other.X) &&
+		p.Y.Eq(other.Y) &&
+		p.A.Eq(other.A) &&
+		p.B.Eq(other.B)
 }
 
-func (self *Point) Ne(other *Point) bool {
-	return !self.Eq(other)
+// Ne returns true if the points are not equal.
+func (p *Point) Ne(other *Point) bool {
+	return !p.Eq(other)
 }
 
-// Set z to p1 + p2 and return z.
-func (z *Point) Add(p1, p2 *Point) *Point {
+// Add p1 + p2 and return p.
+func (p *Point) Add(p1, p2 *Point) *Point {
 	if p1.A.Ne(p2.A) || p1.B.Ne(p2.B) {
 		panic(fmt.Sprintf("Points %v, %v are not on the same curve", p1, p2))
 	}
@@ -60,20 +62,20 @@ func (z *Point) Add(p1, p2 *Point) *Point {
 	two := big.NewInt(2)
 
 	if p1.X == nil {
-		*z = Point{X: p2.X, Y: p2.Y, A: a, B: b}
-		return z
+		*p = Point{X: p2.X, Y: p2.Y, A: a, B: b}
+		return p
 	}
 
 	if p2.X == nil {
-		*z = Point{X: p1.X, Y: p1.Y, A: a, B: b}
-		return z
+		*p = Point{X: p1.X, Y: p1.Y, A: a, B: b}
+		return p
 	}
 
 	// Case 1: p1.x == p2.x, p1.y != p2.y
 	// Result is point at infinity
 	if p1.X.Eq(p2.X) && p1.Y.Ne(p2.Y) {
-		*z = Point{X: nil, Y: nil, A: a, B: b}
-		return z
+		*p = Point{X: nil, Y: nil, A: a, B: b}
+		return p
 	}
 
 	// Case 2: p1.x ≠ p2.x
@@ -91,19 +93,19 @@ func (z *Point) Add(p1, p2 *Point) *Point {
 		x3.Pow(x3, two).Sub(x3, x1).Sub(x3, x2)
 		y3 := tmp.Sub(x1, x3)
 		y3.Mul(y3, s).Sub(y3, y1)
-		*z = Point{X: x3, Y: y3, A: a, B: b}
-		return z
+		*p = Point{X: x3, Y: y3, A: a, B: b}
+		return p
 	}
 
 	// Case 4: if we are tangent to the vertical line,
 	// we return the point at infinity
 	// note instead of figuring out what 0 is for each type
-	// we just use 0 * self.x
-	var zero FieldInteger = x1.Copy()
+	// we just use 0 * p.x
+	zero := x1.Copy()
 	zero.Cmul(zero, big.NewInt(0))
 	if p1.Eq(p2) && p1.Y.Eq(zero) {
-		*z = Point{X: nil, Y: nil, A: a, B: b}
-		return z
+		*p = Point{X: nil, Y: nil, A: a, B: b}
+		return p
 	}
 
 	// Case 3: p1 == p2
@@ -122,16 +124,16 @@ func (z *Point) Add(p1, p2 *Point) *Point {
 	y3 := s.Copy()
 	tmp.Sub(x1, x3)
 	y3.Mul(s, tmp).Sub(y3, y1)
-	*z = Point{X: x3, Y: y3, A: a, B: b}
-	return z
+	*p = Point{X: x3, Y: y3, A: a, B: b}
+	return p
 }
 
-// Set z to c * p and return z.
-func (z *Point) Cmul(p *Point, coefficient *big.Int) *Point {
+// Cmul sets p to c * r and return p.
+func (p *Point) Cmul(r *Point, coefficient *big.Int) *Point {
 	coef := new(big.Int)
 	coef.Set(coefficient)
-	current := &Point{X: p.X, Y: p.Y, A: p.A, B: p.B}
-	result := &Point{X: nil, Y: nil, A: p.A, B: p.B}
+	current := &Point{X: r.X, Y: r.Y, A: r.A, B: r.B}
+	result := &Point{X: nil, Y: nil, A: r.A, B: r.B}
 	for coef.Sign() > 0 {
 		if coef.Bit(0) == 1 {
 			result.Add(result, current)
@@ -139,6 +141,6 @@ func (z *Point) Cmul(p *Point, coefficient *big.Int) *Point {
 		current.Add(current, current)
 		coef.Rsh(coef, 1)
 	}
-	*z = *result
-	return z
+	*p = *result
+	return p
 }

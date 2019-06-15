@@ -2,8 +2,9 @@ package ecc
 
 import (
 	"fmt"
-	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
 var (
@@ -40,7 +41,7 @@ func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
 	return &S256Point{X: p.X.(*S256Field), Y: p.Y.(*S256Field)}, nil
 }
 
-// returns a Point object from a SEC binary (not hex)
+// ParseS256Point returns a Point object from a SEC binary (not hex)
 func ParseS256Point(secBin []byte) *S256Point {
 	if secBin[0] == 4 {
 		var x, y *big.Int = new(big.Int), new(big.Int)
@@ -50,7 +51,7 @@ func ParseS256Point(secBin []byte) *S256Point {
 		return result
 	}
 	isEven := secBin[0] == 2
-	var xval *big.Int = new(big.Int)
+	xval := new(big.Int)
 	xval.SetBytes(secBin[1:])
 	x := NewS256Field(xval, P)
 	// right side of the equation y^2 = x^3 + 7
@@ -60,7 +61,7 @@ func ParseS256Point(secBin []byte) *S256Point {
 	// solve for left side
 	beta := alpha.Sqrt()
 	var even_beta, odd_beta *S256Field
-	var betaOffset *big.Int = new(big.Int)
+	betaOffset := new(big.Int)
 	betaOffset.Sub(P, beta.Num)
 	if beta.Num.Bit(0) == 0 {
 		even_beta = beta

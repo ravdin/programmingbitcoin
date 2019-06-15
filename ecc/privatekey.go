@@ -3,39 +3,43 @@ package ecc
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"github.com/ravdin/programmingbitcoin/util"
 	"math/big"
+
+	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// PrivateKey represents a private key with a secret.
 type PrivateKey struct {
 	secret *big.Int
 	Point  *S256Point
 }
 
+// NewPrivateKey returns a PrivateKey instance.
 func NewPrivateKey(secret *big.Int) *PrivateKey {
 	return &PrivateKey{secret: secret, Point: new(S256Point).Cmul(G, secret)}
 }
 
-func Hex(self *PrivateKey) string {
-	return fmt.Sprintf("%s", hex.EncodeToString(self.secret.Bytes()))
+// Hex returns the private key in hex format.
+func Hex(pk *PrivateKey) string {
+	return fmt.Sprintf("%x", pk.secret.Bytes())
 }
 
-func (self *PrivateKey) Sign(z *big.Int) *Signature {
-	k := self.deterministicK(z)
+// Sign returns a Signature instance.
+func (pk *PrivateKey) Sign(z *big.Int) *Signature {
+	k := pk.deterministicK(z)
 	// r is the x coordinate of the resulting point k*G
 	r := new(S256Point).Cmul(G, k).X.Num
 	// remember 1/k = pow(k, N-2, N)
 	e := new(big.Int)
 	e.Sub(N, big.NewInt(2))
-	k_inv := new(big.Int)
-	k_inv.Exp(k, e, N)
+	kInv := new(big.Int)
+	kInv.Exp(k, e, N)
 	// s = (z+r*secret) / k
 	s := new(big.Int)
-	s.Mul(r, self.secret)
+	s.Mul(r, pk.secret)
 	s.Add(s, z)
-	s.Mul(s, k_inv)
+	s.Mul(s, kInv)
 	s.Mod(s, N)
 	tmp := new(big.Int)
 	tmp.Mul(s, big.NewInt(2))
@@ -47,9 +51,10 @@ func (self *PrivateKey) Sign(z *big.Int) *Signature {
 	return NewSignature(r, s)
 }
 
-func (self *PrivateKey) Wif(compressed bool, testnet bool) string {
+// Wif converts the secret from integer to a 32-bytes in big endian
+func (pk *PrivateKey) Wif(compressed bool, testnet bool) string {
 	var secretBytes = make([]byte, 33)
-	copy(secretBytes[1:], util.IntToBytes(self.secret, 32))
+	copy(secretBytes[1:], util.IntToBytes(pk.secret, 32))
 	if testnet {
 		secretBytes[0] = 0xef
 	} else {
@@ -61,17 +66,17 @@ func (self *PrivateKey) Wif(compressed bool, testnet bool) string {
 	return util.EncodeBase58Checksum(secretBytes)
 }
 
-func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
-	var k []byte = make([]byte, 32)
-	var v []byte = make([]byte, 32)
+func (pk *PrivateKey) deterministicK(z *big.Int) *big.Int {
+	k := make([]byte, 32)
+	v := make([]byte, 32)
 	for i := 0; i < 32; i++ {
 		k[i] = 0
 		v[i] = 1
 	}
-	var ztmp *big.Int = new(big.Int)
+	ztmp := new(big.Int)
 	ztmp.Mod(z, N)
 	zBytes := util.IntToBytes(ztmp, 32)
-	secretBytes := util.IntToBytes(self.secret, 32)
+	secretBytes := util.IntToBytes(pk.secret, 32)
 	mac := hmac.New(sha256.New, k)
 	mac.Write(v)
 	mac.Write([]byte{0})
@@ -91,7 +96,7 @@ func (self *PrivateKey) deterministicK(z *big.Int) *big.Int {
 	mac.Write(v)
 	v = mac.Sum(nil)
 	mac.Reset()
-	var candidate *big.Int = new(big.Int)
+	candidate := new(big.Int)
 	for true {
 		mac.Write(v)
 		v = mac.Sum(nil)

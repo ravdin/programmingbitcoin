@@ -8,7 +8,7 @@ import (
 func TestECC(t *testing.T) {
 	var prime int64 = 223
 	f223 := func(n int64) FieldInteger {
-		return NewS256FieldFromInt64(n, prime)
+		return newS256FieldFromInt64(n, prime)
 	}
 	a := f223(0)
 	b := f223(7)

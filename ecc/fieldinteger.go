@@ -4,9 +4,9 @@ import (
 	"math/big"
 )
 
-// Representation of an integer for finite field math.
+// FieldInteger is a representation of an integer for finite field math.
 type FieldInteger interface {
-	// Set z to x+y and return z
+	// Add sets the instance to x + y
 	Add(x, y FieldInteger) FieldInteger
 	// Set z to x-y and return z
 	Sub(x, y FieldInteger) FieldInteger
