@@ -1,6 +1,6 @@
 package util
 
-// murmur3 hash
+// Murmur3 hash
 func Murmur3(data []byte, seed uint32) uint32 {
 	var c1 uint32 = 0xcc9e2d51
 	var c2 uint32 = 0x1b873593
@@ -18,7 +18,7 @@ func Murmur3(data []byte, seed uint32) uint32 {
 		h1 = h1*5 + 0xe6546b64
 	}
 	// tail
-	var k1 uint32 = 0
+	var k1 uint32
 	val := length & 0x03
 	if val == 3 {
 		k1 = uint32(data[roundedEnd+2]) << 16

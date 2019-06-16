@@ -116,14 +116,14 @@ func (scr *Script) Serialize() []byte {
 			// Otherwise, this is an element.
 			// for large lengths, we have to use a pushdata opcode
 			if length < 76 {
-				raw = append(raw, util.ByteToLittleEndian(byte(length)))
+				raw = append(raw, byte(length))
 			} else if length >= 76 && length < 0x100 {
 				// 76 is pushdata1
-				raw = append(raw, util.ByteToLittleEndian(76))
-				raw = append(raw, util.ByteToLittleEndian(byte(length)))
+				raw = append(raw, byte(76))
+				raw = append(raw, byte(length))
 			} else if length >= 0x100 && length <= 520 {
 				// 77 is pushdata2
-				raw = append(raw, util.ByteToLittleEndian(77))
+				raw = append(raw, byte(77))
 				raw = append(raw, util.Int16ToLittleEndian(uint16(length))...)
 			}
 			raw = append(raw, cmd...)

@@ -8,15 +8,17 @@ import (
 	"math/big"
 )
 
+// Useful constants
 const (
-	SIGHASH_ALL    uint32 = 1
-	SIGHASH_NONE   uint32 = 2
-	SIGHASH_SINGLE uint32 = 3
-	BASE58ALPHABET string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-	TWO_WEEKS      int    = 60 * 60 * 24 * 14
-	MAX_TARGET     string = `ffff0000000000000000000000000000000000000000000000000000`
+	SigHashAll     uint32 = 1
+	SigHashNone    uint32 = 2
+	SigHashSingle  uint32 = 3
+	base58Alphabet string = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	twoWeeks       int    = 60 * 60 * 24 * 14
+	maxTarget      string = `ffff0000000000000000000000000000000000000000000000000000`
 )
 
+// HexStringToBytes converts a hex string to a byte array.
 func HexStringToBytes(str string) []byte {
 	if len(str)&1 == 1 {
 		str = "0" + str
@@ -30,13 +32,14 @@ func HexStringToBytes(str string) []byte {
 	return dst
 }
 
+// HexStringToBigInt converts a hex string to a big.Int.
 func HexStringToBigInt(str string) *big.Int {
 	result := new(big.Int)
 	result.SetBytes(HexStringToBytes(str))
 	return result
 }
 
-// Reverse a byte array in place and return the result.
+// ReverseByteArray reverses a byte array in place and returns the result.
 func ReverseByteArray(arr []byte) []byte {
 	length := len(arr)
 	for i := 0; i < length/2; i++ {
@@ -51,38 +54,40 @@ func encodeBase58(s string) string {
 	chars := []byte(s)
 	for _, c := range chars {
 		if c == 0 {
-			count += 1
+			count++
 		} else {
 			break
 		}
 	}
-	var prefix []int = make([]int, count)
 	var encoded []int
-	var num *big.Int = new(big.Int)
-	var mod *big.Int = new(big.Int)
-	var b58 *big.Int = big.NewInt(58)
+	prefix := make([]int, count)
+	num := new(big.Int)
+	mod := new(big.Int)
+	b58 := big.NewInt(58)
 	num.SetBytes(chars)
 	for num.Sign() > 0 {
 		num.QuoRem(num, b58, mod)
 		encoded = append(encoded, int(mod.Int64()))
 	}
 	encoded = append(encoded, prefix...)
-	alphabet := []byte(BASE58ALPHABET)
-	var result []byte = make([]byte, len(encoded))
+	alphabet := []byte(base58Alphabet)
+	result := make([]byte, len(encoded))
 	for i := len(encoded) - 1; i >= 0; i-- {
 		result[len(encoded)-i-1] = alphabet[encoded[i]]
 	}
 	return string(result)
 }
 
+// EncodeBase58Checksum returns a base58 encoded string with an appended checksum.
 func EncodeBase58Checksum(b []byte) string {
 	return encodeBase58(string(append(b, Hash256(b)[:4]...)))
 }
 
+// DecodeBase58 decodes a base58 string and verifies the checksum.
 func DecodeBase58(encoded string) []byte {
 	num := big.NewInt(0)
 	b58 := big.NewInt(58)
-	alphabet := []byte(BASE58ALPHABET)
+	alphabet := []byte(base58Alphabet)
 	chars := []byte(encoded)
 	for _, c := range chars {
 		num.Mul(num, b58)
@@ -92,18 +97,20 @@ func DecodeBase58(encoded string) []byte {
 	length := len(combined)
 	checksum := combined[length-4:]
 	if !bytes.Equal(Hash256(combined[:length-4])[:4], checksum) {
-		panic(fmt.Sprintf("Bad address: %v %v", checksum, Hash256(combined[:length-4])[:4]))
+		panic(fmt.Sprintf("Bad address: %x %x", checksum, Hash256(combined[:length-4])[:4]))
 	}
 	return combined[1 : length-4]
 }
 
+// IntToBytes returns a byte array of a given size from a big.Int.
 func IntToBytes(num *big.Int, size int) []byte {
-	var result []byte = make([]byte, size)
+	result := make([]byte, size)
 	var raw = num.Bytes()
 	copy(result[size-len(raw):], raw)
 	return result
 }
 
+// ReadVarInt reads an integer of a variable size (up to 8 bytes) from a byte reader.
 func ReadVarInt(r *bytes.Reader) int {
 	b, err := r.ReadByte()
 	if err != nil {
@@ -113,21 +120,19 @@ func ReadVarInt(r *bytes.Reader) int {
 	switch b {
 	case 0xfd:
 		bufsize = 2
-		break
 	case 0xfe:
 		bufsize = 4
-		break
 	case 0xff:
 		bufsize = 8
-		break
 	default:
 		return int(b)
 	}
-	var buffer []byte = make([]byte, bufsize)
+	buffer := make([]byte, bufsize)
 	r.Read(buffer)
 	return int(LittleEndianToInt64(buffer))
 }
 
+// EncodeVarInt returns a variable size byte array from an integer.
 func EncodeVarInt(i int) []byte {
 	if i < 0xfd {
 		return []byte{byte(i)}
@@ -151,16 +156,7 @@ func EncodeVarInt(i int) []byte {
 	return result
 }
 
-func LittleEndianToByte(b byte) byte {
-	var result byte
-	buf := bytes.NewReader([]byte{b})
-	err := binary.Read(buf, binary.LittleEndian, &result)
-	if err != nil {
-		panic(nil)
-	}
-	return result
-}
-
+// LittleEndianToInt16 returns a uint16 from a byte array.
 func LittleEndianToInt16(b []byte) uint16 {
 	if len(b) > 2 {
 		panic("Value is too large!")
@@ -177,6 +173,7 @@ func LittleEndianToInt16(b []byte) uint16 {
 	return result
 }
 
+// LittleEndianToInt32 returns a uint32 from a byte array.
 func LittleEndianToInt32(b []byte) uint32 {
 	if len(b) > 4 {
 		panic("Value is too large!")
@@ -193,6 +190,7 @@ func LittleEndianToInt32(b []byte) uint32 {
 	return result
 }
 
+// LittleEndianToInt64 returns a uint64 from a byte array.
 func LittleEndianToInt64(b []byte) uint64 {
 	if len(b) > 8 {
 		panic("Value is too large!")
@@ -209,6 +207,7 @@ func LittleEndianToInt64(b []byte) uint64 {
 	return result
 }
 
+// LittleEndianToBigInt returns a big.Int from a byte array.
 func LittleEndianToBigInt(b []byte) *big.Int {
 	result := new(big.Int)
 	ReverseByteArray(b)
@@ -216,15 +215,7 @@ func LittleEndianToBigInt(b []byte) *big.Int {
 	return result
 }
 
-func ByteToLittleEndian(num byte) byte {
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, &num)
-	if err != nil {
-		panic(err)
-	}
-	return buf.Bytes()[0]
-}
-
+// Int16ToLittleEndian returns a byte array from a uint16.
 func Int16ToLittleEndian(num uint16) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
@@ -234,6 +225,7 @@ func Int16ToLittleEndian(num uint16) []byte {
 	return buf.Bytes()
 }
 
+// Int32ToLittleEndian returns a byte array from a uint32.
 func Int32ToLittleEndian(num uint32) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
@@ -243,6 +235,7 @@ func Int32ToLittleEndian(num uint32) []byte {
 	return buf.Bytes()
 }
 
+// Int64ToLittleEndian returns a byte array from a uint64.
 func Int64ToLittleEndian(num uint64) []byte {
 	buf := new(bytes.Buffer)
 	err := binary.Write(buf, binary.LittleEndian, &num)
@@ -252,9 +245,9 @@ func Int64ToLittleEndian(num uint64) []byte {
 	return buf.Bytes()
 }
 
-// Takes a byte sequence hash160 and returns a p2pkh address string
+// H160ToP2pkhAddress takes a byte sequence hash160 and returns a p2pkh address string
 func H160ToP2pkhAddress(h160 []byte, testnet bool) string {
-	var prefix byte = 0
+	var prefix byte
 	if testnet {
 		prefix = 0x6f
 	}
@@ -264,7 +257,7 @@ func H160ToP2pkhAddress(h160 []byte, testnet bool) string {
 	return EncodeBase58Checksum(b)
 }
 
-// Takes a byte sequence hash160 and returns a p2sh address string
+// H160ToP2shAddress takes a byte sequence hash160 and returns a p2sh address string
 func H160ToP2shAddress(h160 []byte, testnet bool) string {
 	var prefix byte = 5
 	if testnet {
@@ -276,7 +269,7 @@ func H160ToP2shAddress(h160 []byte, testnet bool) string {
 	return EncodeBase58Checksum(b)
 }
 
-// Turns bits into a target (large 256-bit integer)
+// BitsToTarget turns bits into a target (large 256-bit integer)
 func BitsToTarget(bits []byte) *big.Int {
 	length := len(bits)
 	exponent := bits[length-1]
@@ -292,7 +285,7 @@ func BitsToTarget(bits []byte) *big.Int {
 	return result
 }
 
-// Turns a target integer back into bits
+// TargetToBits turns a target integer back into bits
 func TargetToBits(target *big.Int) []byte {
 	rawBytes := target.Bytes()
 	coefficient := make([]byte, 3)
@@ -310,36 +303,36 @@ func TargetToBits(target *big.Int) []byte {
 	return result
 }
 
-// Calculates the new bits given a 2016-block time differential and the previous bits
+// CalculateNewBits calculates the new bits given a 2016-block time differential and the previous bits
 func CalculateNewBits(previousBits []byte, timeDifferential int) []byte {
 	// if the time differential is greater than 8 weeks, set to 8 weeks
-	if timeDifferential > TWO_WEEKS*4 {
-		timeDifferential = TWO_WEEKS * 4
+	if timeDifferential > twoWeeks*4 {
+		timeDifferential = twoWeeks * 4
 	}
 	// if the time differential is less than half a week, set to half a week
-	if timeDifferential < TWO_WEEKS/4 {
-		timeDifferential = TWO_WEEKS / 4
+	if timeDifferential < twoWeeks/4 {
+		timeDifferential = twoWeeks / 4
 	}
 	// the new target is the previous target * time differential / two weeks
 	target := BitsToTarget(previousBits)
 	target.Mul(target, big.NewInt(int64(timeDifferential)))
-	target.Div(target, big.NewInt(int64(TWO_WEEKS)))
+	target.Div(target, big.NewInt(int64(twoWeeks)))
 
-	var maxTarget = HexStringToBigInt(MAX_TARGET)
-	if target.Cmp(maxTarget) > 0 {
-		target = maxTarget
+	biMaxTarget := HexStringToBigInt(maxTarget)
+	if target.Cmp(biMaxTarget) > 0 {
+		target = biMaxTarget
 	}
 
 	// convert the new target to bits
 	return TargetToBits(target)
 }
 
-//Takes the binary hashes and calculates the hash256
+// MerkleParent takes the binary hashes and calculates the hash256
 func MerkleParent(hash1, hash2 []byte) []byte {
 	return Hash256(append(hash1, hash2...))
 }
 
-// Takes a list of binary hashes and returns a list that's half the length
+// MerkleParentLevel takes a list of binary hashes and returns a list that's half the length
 func MerkleParentLevel(hashes [][]byte) [][]byte {
 	if len(hashes) == 1 {
 		panic("Cannot take a parent level with only 1 item")
@@ -357,7 +350,7 @@ func MerkleParentLevel(hashes [][]byte) [][]byte {
 	return result
 }
 
-// Takes a list of binary hashes and returns the merkle root
+// MerkleRoot takes a list of binary hashes and returns the merkle root
 func MerkleRoot(hashes [][]byte) []byte {
 	current := hashes
 	for len(current) > 1 {
@@ -366,6 +359,7 @@ func MerkleRoot(hashes [][]byte) []byte {
 	return current[0]
 }
 
+// BitFieldToBytes converts a bit field to a byte array.
 func BitFieldToBytes(bits []byte) []byte {
 	if len(bits)%8 != 0 {
 		panic("bits does not have a length that is divisible by 8")
@@ -381,6 +375,7 @@ func BitFieldToBytes(bits []byte) []byte {
 	return result
 }
 
+// BytesToBitField converts a byte array to a bit field.
 func BytesToBitField(bytes []byte) []byte {
 	result := make([]byte, len(bytes)*8)
 	for byteIndex, b := range bytes {

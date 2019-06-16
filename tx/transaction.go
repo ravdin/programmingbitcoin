@@ -115,7 +115,7 @@ func (tx *Transaction) SigHash(inputIndex int) []byte {
 		serialized = append(serialized, txOut.Serialize()...)
 	}
 	serialized = append(serialized, util.Int32ToLittleEndian(tx.Locktime)...)
-	serialized = append(serialized, util.Int32ToLittleEndian(util.SIGHASH_ALL)...)
+	serialized = append(serialized, util.Int32ToLittleEndian(util.SigHashAll)...)
 	return util.Hash256(serialized)
 }
 
@@ -150,7 +150,7 @@ func (tx *Transaction) SignInput(inputIndex int, pk *ecc.PrivateKey) bool {
 	z.SetBytes(tx.SigHash(inputIndex))
 	// get der signature of z from private key
 	der := pk.Sign(z).Der()
-	der = append(der, byte(util.SIGHASH_ALL))
+	der = append(der, byte(util.SigHashAll))
 	// calculate the sec
 	sec := pk.Point.Sec(true)
 	// initialize a new script with [sig, sec] as the cmds
