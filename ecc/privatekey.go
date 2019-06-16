@@ -17,7 +17,7 @@ type PrivateKey struct {
 
 // NewPrivateKey returns a PrivateKey instance.
 func NewPrivateKey(secret *big.Int) *PrivateKey {
-	return &PrivateKey{secret: secret, Point: new(S256Point).Cmul(G, secret)}
+	return &PrivateKey{secret: secret, Point: new(S256Point).Cmul(_G, secret)}
 }
 
 // Hex returns the private key in hex format.
@@ -29,22 +29,22 @@ func Hex(pk *PrivateKey) string {
 func (pk *PrivateKey) Sign(z *big.Int) *Signature {
 	k := pk.deterministicK(z)
 	// r is the x coordinate of the resulting point k*G
-	r := new(S256Point).Cmul(G, k).X.Num
+	r := new(S256Point).Cmul(_G, k).X.Num
 	// remember 1/k = pow(k, N-2, N)
 	e := new(big.Int)
-	e.Sub(N, big.NewInt(2))
+	e.Sub(_N, big.NewInt(2))
 	kInv := new(big.Int)
-	kInv.Exp(k, e, N)
+	kInv.Exp(k, e, _N)
 	// s = (z+r*secret) / k
 	s := new(big.Int)
 	s.Mul(r, pk.secret)
 	s.Add(s, z)
 	s.Mul(s, kInv)
-	s.Mod(s, N)
+	s.Mod(s, _N)
 	tmp := new(big.Int)
 	tmp.Mul(s, big.NewInt(2))
-	if tmp.Cmp(N) > 0 {
-		s.Sub(N, s)
+	if tmp.Cmp(_N) > 0 {
+		s.Sub(_N, s)
 	}
 	// return an instance of Signature:
 	// Signature(r, s)
@@ -74,7 +74,7 @@ func (pk *PrivateKey) deterministicK(z *big.Int) *big.Int {
 		v[i] = 1
 	}
 	ztmp := new(big.Int)
-	ztmp.Mod(z, N)
+	ztmp.Mod(z, _N)
 	zBytes := util.IntToBytes(ztmp, 32)
 	secretBytes := util.IntToBytes(pk.secret, 32)
 	mac := hmac.New(sha256.New, k)
@@ -101,7 +101,7 @@ func (pk *PrivateKey) deterministicK(z *big.Int) *big.Int {
 		mac.Write(v)
 		v = mac.Sum(nil)
 		candidate.SetBytes(v)
-		if candidate.Sign() > 0 && candidate.Cmp(N) < 0 {
+		if candidate.Sign() > 0 && candidate.Cmp(_N) < 0 {
 			break
 		}
 		mac.Reset()

@@ -7,34 +7,42 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// Useful constants for secp256k1:
+// _G: Generator point.
+// _A, _B: 0 and 7 respectively, for y^2 = x^3 + 7
+// _N: order of the finite field.
+// _P: Large prime number that is less than 2^256.
 var (
-	G *S256Point
-	A *s256Field
-	B *s256Field
-	N *big.Int
-	P *big.Int
+	_G *S256Point
+	_A *s256Field
+	_B *s256Field
+	_N *big.Int
+	_P *big.Int
 )
 
 func init() {
-	N = util.HexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+	_N = util.HexStringToBigInt("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
 
 	// 2^256 - 2^32 - 2^9 - 2^8 - 2^7 - 2^6 - 2^4 - 1
-	P = util.HexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
-	A = newS256Field(big.NewInt(0), P)
-	B = newS256Field(big.NewInt(7), P)
+	_P = util.HexStringToBigInt("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f")
+	_A = newS256Field(big.NewInt(0), _P)
+	_B = newS256Field(big.NewInt(7), _P)
 
 	x := util.HexStringToBigInt("79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
 	y := util.HexStringToBigInt("483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
-	G, _ = NewS256Point(x, y)
+	_G, _ = NewS256Point(x, y)
 }
 
+// S256Point sepresents a point in a secp256k1 elliptic curve.
 type S256Point struct {
 	X *s256Field
 	Y *s256Field
 }
 
+// NewS256Point initializes a new S256Point.
+// Returns an error if the point is not on the curve.
 func NewS256Point(x *big.Int, y *big.Int) (*S256Point, error) {
-	p, err := NewPoint(newS256Field(x, P), newS256Field(y, P), A, B)
+	p, err := NewPoint(newS256Field(x, _P), newS256Field(y, _P), _A, _B)
 	if err != nil {
 		return nil, err
 	}
@@ -53,21 +61,21 @@ func ParseS256Point(secBin []byte) *S256Point {
 	isEven := secBin[0] == 2
 	xval := new(big.Int)
 	xval.SetBytes(secBin[1:])
-	x := newS256Field(xval, P)
+	x := newS256Field(xval, _P)
 	// right side of the equation y^2 = x^3 + 7
 	alpha := new(s256Field)
 	alpha.Pow(x, big.NewInt(3))
-	alpha.Add(alpha, B)
+	alpha.Add(alpha, _B)
 	// solve for left side
 	beta := alpha.Sqrt()
 	var evenBeta, oddBeta *s256Field
 	betaOffset := new(big.Int)
-	betaOffset.Sub(P, beta.Num)
+	betaOffset.Sub(_P, beta.Num)
 	if beta.Num.Bit(0) == 0 {
 		evenBeta = beta
-		oddBeta = newS256Field(betaOffset, P)
+		oddBeta = newS256Field(betaOffset, _P)
 	} else {
-		evenBeta = newS256Field(betaOffset, P)
+		evenBeta = newS256Field(betaOffset, _P)
 		oddBeta = beta
 	}
 	if isEven {
@@ -77,7 +85,7 @@ func ParseS256Point(secBin []byte) *S256Point {
 }
 
 func (p *S256Point) point() *Point {
-	if result, err := NewPoint(p.X, p.Y, A, B); err == nil {
+	if result, err := NewPoint(p.X, p.Y, _A, _B); err == nil {
 		return result
 	}
 	panic("Error casting to Point!")
@@ -86,11 +94,11 @@ func (p *S256Point) point() *Point {
 func (p *S256Point) String() string {
 	if p.X == nil {
 		return "Point(infinity)"
-	} else {
-		return fmt.Sprintf("Point(%v,%v)", p.X.Num, p.Y.Num)
 	}
+	return fmt.Sprintf("Point(%v,%v)", p.X.Num, p.Y.Num)
 }
 
+// Eq returns true if two points are equal, and false otherwise.
 func (p *S256Point) Eq(other *S256Point) bool {
 	if p.X == nil {
 		return other.X == nil
@@ -98,11 +106,12 @@ func (p *S256Point) Eq(other *S256Point) bool {
 	return p.X.Eq(other.X) && p.Y.Eq(other.Y)
 }
 
+// Ne returns true if two points are not equal, and false otherwise.
 func (p *S256Point) Ne(other *S256Point) bool {
 	return !p.Eq(other)
 }
 
-// Set z to p1 + p2 and return z.
+// Add p1 + p2 and return p.
 func (p *S256Point) Add(p1, p2 *S256Point) *S256Point {
 	result := new(Point)
 	result.Add(p1.point(), p2.point())
@@ -114,10 +123,10 @@ func (p *S256Point) Add(p1, p2 *S256Point) *S256Point {
 	return p
 }
 
-// Set z to c * r and return p.
+// Cmul multiplies a point r by a constant and returns p.
 func (p *S256Point) Cmul(r *S256Point, coefficient *big.Int) *S256Point {
 	coef := new(big.Int)
-	coef.Mod(coefficient, N)
+	coef.Mod(coefficient, _N)
 	result := new(Point)
 	result.Cmul(r.point(), coef)
 	if result.X == nil && result.Y == nil {
@@ -128,26 +137,27 @@ func (p *S256Point) Cmul(r *S256Point, coefficient *big.Int) *S256Point {
 	return p
 }
 
+// Verify a signature.
 func (p *S256Point) Verify(z *big.Int, sig *Signature) bool {
 	// By Fermat's Little Theorem, 1/s = pow(s, N-2, N)
 	sInv := new(big.Int)
 	e := new(big.Int)
-	e.Sub(N, big.NewInt(2))
-	sInv.Exp(sig.s, e, N)
+	e.Sub(_N, big.NewInt(2))
+	sInv.Exp(sig.s, e, _N)
 	// u = z / s
 	u := new(big.Int)
-	u.Mul(z, sInv).Mod(u, N)
+	u.Mul(z, sInv).Mod(u, _N)
 	// v = r / s
 	v := new(big.Int)
-	v.Mul(sig.r, sInv).Mod(v, N)
+	v.Mul(sig.r, sInv).Mod(v, _N)
 	// u*G + v*P should have as the x coordinate, r
 	total := new(S256Point)
-	total.Cmul(G, u)
+	total.Cmul(_G, u)
 	total.Add(total, new(S256Point).Cmul(p, v))
 	return total.X.Num.Cmp(sig.r) == 0
 }
 
-// returns the binary version of the SEC format
+// Sec returns the binary version of the SEC format
 func (p *S256Point) Sec(compressed bool) []byte {
 	x := util.IntToBytes(p.X.Num, 32)
 	y := util.IntToBytes(p.Y.Num, 32)
@@ -169,10 +179,12 @@ func (p *S256Point) Sec(compressed bool) []byte {
 	return result
 }
 
+// Hash160 returns a hash of the SEC format.
 func (p *S256Point) Hash160(compressed bool) []byte {
 	return util.Hash160(p.Sec(compressed))
 }
 
+// Address of the public key.
 func (p *S256Point) Address(compressed bool, testnet bool) string {
 	h160 := p.Hash160(compressed)
 	var prefix byte

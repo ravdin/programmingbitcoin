@@ -11,7 +11,7 @@ import (
 func TestS256Point(t *testing.T) {
 	t.Run("Test Order", func(t *testing.T) {
 		point := new(S256Point)
-		point.Cmul(G, N)
+		point.Cmul(_G, _N)
 		if point.X != nil || point.Y != nil {
 			t.Errorf("Expected point at infinity, got %v", point)
 		}
@@ -29,7 +29,7 @@ func TestS256Point(t *testing.T) {
 			x := util.HexStringToBigInt(item[1])
 			y := util.HexStringToBigInt(item[2])
 			actual := new(S256Point)
-			actual.Cmul(G, secret)
+			actual.Cmul(_G, secret)
 			expected, _ := NewS256Point(x, y)
 			if !actual.Eq(expected) {
 				t.Errorf("Expected %v, got %v", expected, actual)
@@ -80,7 +80,7 @@ func TestS256Point(t *testing.T) {
 		}
 		for coefficient, sec := range tests {
 			point := new(S256Point)
-			point.Cmul(G, big.NewInt(coefficient))
+			point.Cmul(_G, big.NewInt(coefficient))
 			uncompressed := sec[0]
 			compressed := sec[1]
 			if !bytes.Equal(point.Sec(false), util.HexStringToBytes(uncompressed)) {
@@ -112,7 +112,7 @@ func TestS256Point(t *testing.T) {
 			// The first test is compressed and the rest are uncompressed.
 			compressed := i == 0
 			point := new(S256Point)
-			point.Cmul(G, big.NewInt(secret))
+			point.Cmul(_G, big.NewInt(secret))
 			mainnetExpected := addresses[0]
 			testnetExpected := addresses[1]
 			mainnetActual := point.Address(compressed, false)

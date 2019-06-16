@@ -4,9 +4,9 @@ import (
 	"testing"
 )
 
-type FieldIntegerOp func(FieldInteger, FieldInteger) bool
+type fieldIntegerOp func(FieldInteger, FieldInteger) bool
 
-func fieldIntegerNeOp() FieldIntegerOp {
+func fieldIntegerNeOp() fieldIntegerOp {
 	return func(a FieldInteger, b FieldInteger) bool {
 		return a.Ne(b)
 	}
@@ -18,13 +18,13 @@ func assertEqual(a FieldInteger, b FieldInteger, t *testing.T) {
 	}
 }
 
-func assertTrue(op FieldIntegerOp, a FieldInteger, b FieldInteger, t *testing.T) {
+func assertTrue(op fieldIntegerOp, a FieldInteger, b FieldInteger, t *testing.T) {
 	if !op(a, b) {
 		t.Errorf("Assertion failed!\n")
 	}
 }
 
-func assertFalse(op FieldIntegerOp, a FieldInteger, b FieldInteger, t *testing.T) {
+func assertFalse(op fieldIntegerOp, a FieldInteger, b FieldInteger, t *testing.T) {
 	if op(a, b) {
 		t.Errorf("Assertion failed!\n")
 	}

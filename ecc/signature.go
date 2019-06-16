@@ -6,11 +6,13 @@ import (
 	"math/big"
 )
 
+// Signature encapsulates a digital signature.
 type Signature struct {
 	r *big.Int
 	s *big.Int
 }
 
+// NewSignature initializes a Signature object.
 func NewSignature(r *big.Int, s *big.Int) *Signature {
 	return &Signature{r: r, s: s}
 }
@@ -19,6 +21,7 @@ func (sig *Signature) String() string {
 	return fmt.Sprintf("Signature(%x,%x)", sig.r, sig.s)
 }
 
+// Der serializes the signature.
 func (sig *Signature) Der() []byte {
 	encode := func(num *big.Int) []byte {
 		bin := num.Bytes()
@@ -40,6 +43,7 @@ func (sig *Signature) Der() []byte {
 	return result
 }
 
+// ParseSignature parses a signature in DER format.
 func ParseSignature(signatureBin []byte) *Signature {
 	reader := bytes.NewReader(signatureBin)
 	compound, _ := reader.ReadByte()
@@ -55,7 +59,7 @@ func ParseSignature(signatureBin []byte) *Signature {
 		panic("Bad Signature")
 	}
 	rlength, _ := reader.ReadByte()
-	var r *big.Int = new(big.Int)
+	r := new(big.Int)
 	buffer := make([]byte, rlength)
 	reader.Read(buffer)
 	r.SetBytes(buffer)
@@ -64,7 +68,7 @@ func ParseSignature(signatureBin []byte) *Signature {
 		panic("Bad Signature")
 	}
 	slength, _ := reader.ReadByte()
-	var s *big.Int = new(big.Int)
+	s := new(big.Int)
 	buffer = make([]byte, slength)
 	reader.Read(buffer)
 	s.SetBytes(buffer)

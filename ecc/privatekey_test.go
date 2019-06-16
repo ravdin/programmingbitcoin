@@ -11,7 +11,7 @@ import (
 func TestPrivateKey(t *testing.T) {
 	t.Run("Test Sign", func(t *testing.T) {
 		r := rand.New(rand.NewSource(42))
-		pk := NewPrivateKey(new(big.Int).Rand(r, N))
+		pk := NewPrivateKey(new(big.Int).Rand(r, _N))
 		z := new(big.Int).Rand(r, util.HexStringToBigInt("ffffffffffffffffffffffffffffffffffffffffffffffff"))
 		sig := pk.Sign(z)
 		if !pk.Point.Verify(z, sig) {
