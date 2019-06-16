@@ -10,24 +10,26 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
+// Script represents a Bitcoin script.
 type Script struct {
 	cmds [][]byte
 }
 
-func (z *Script) Add(x, y *Script) *Script {
+// Add x to y and return the result.
+func (scr *Script) Add(x, y *Script) *Script {
 	cmds := make([][]byte, len(x.cmds)+len(y.cmds))
 	copy(cmds, x.cmds)
 	copy(cmds[len(x.cmds):], y.cmds)
-	z.cmds = cmds
-	return z
+	scr.cmds = cmds
+	return scr
 }
 
-func (self *Script) String() string {
-	result := make([]string, len(self.cmds))
-	for i, cmd := range self.cmds {
+func (scr *Script) String() string {
+	result := make([]string, len(scr.cmds))
+	for i, cmd := range scr.cmds {
 		if len(cmd) == 1 {
 			opcode := int(cmd[0])
-			if name, ok := OpCodeNames[opcode]; ok {
+			if name, ok := opCodeNames[opcode]; ok {
 				result[i] = name
 			} else {
 				result[i] = fmt.Sprintf(`OP_[%d]`, opcode)
@@ -39,11 +41,12 @@ func (self *Script) String() string {
 	return strings.Join(result, " ")
 }
 
+// NewScript initializes a new Script object.
 func NewScript(cmds [][]byte) *Script {
 	return &Script{cmds: cmds}
 }
 
-// Takes a hash160 and returns the p2pkh ScriptPubKey
+// P2pkhScript takes a hash160 and returns the p2pkh ScriptPubKey
 func P2pkhScript(h160 []byte) *Script {
 	cmds := [][]byte{
 		{0x76},
@@ -55,51 +58,44 @@ func P2pkhScript(h160 []byte) *Script {
 	return NewScript(cmds)
 }
 
+// Parse a new Script from a byte reader.
 func Parse(s *bytes.Reader) *Script {
-	// get the length of the entire field
 	length := util.ReadVarInt(s)
-	// initialize the cmds array
 	var cmds [][]byte
-	// initialize the number of bytes we've read to 0
-	count := 0
-	// loop until we've read length bytes
+	var count int
 	for count < length {
-		// get the current byte
-		current_byte, _ := s.ReadByte()
-		// increment the bytes we've read
+		currentByte, _ := s.ReadByte()
 		count++
-		// if the current byte is between 1 and 75 inclusive
-		if current_byte >= 1 && current_byte <= 75 {
+		if currentByte >= 1 && currentByte <= 75 {
 			// we have an cmd set n to be the current byte
-			n := int(current_byte)
+			n := int(currentByte)
 			// add the next n bytes as an cmd
 			buffer := make([]byte, n)
 			s.Read(buffer)
 			cmds = append(cmds, buffer)
-			// increase the count by n
 			count += n
-		} else if current_byte == 76 {
+		} else if currentByte == 76 {
 			// op_pushdata1
 			n, _ := s.ReadByte()
-			data_length := int(util.LittleEndianToInt16([]byte{n}))
-			buffer := make([]byte, data_length)
+			dataLength := int(n)
+			buffer := make([]byte, dataLength)
 			s.Read(buffer)
 			cmds = append(cmds, buffer)
-			count += data_length + 1
-		} else if current_byte == 77 {
+			count += dataLength + 1
+		} else if currentByte == 77 {
 			// op_pushdata2
-			var data []byte = make([]byte, 2)
+			data := make([]byte, 2)
 			s.Read(data)
-			data_length := int(util.LittleEndianToInt16(data))
-			buffer := make([]byte, data_length)
+			dataLength := int(util.LittleEndianToInt16(data))
+			buffer := make([]byte, dataLength)
 			s.Read(buffer)
 			cmds = append(cmds, buffer)
-			count += data_length + 2
+			count += dataLength + 2
 		} else {
 			// we have an opcode. set the current byte to op_code
-			op_code := current_byte
+			opCode := currentByte
 			// add the op_code to the list of cmds
-			cmds = append(cmds, []byte{op_code})
+			cmds = append(cmds, []byte{opCode})
 		}
 	}
 	if count != length {
@@ -108,9 +104,10 @@ func Parse(s *bytes.Reader) *Script {
 	return &Script{cmds: cmds}
 }
 
-func (self *Script) Serialize() []byte {
+// Serialize the script as a byte array.
+func (scr *Script) Serialize() []byte {
 	var raw []byte
-	for _, cmd := range self.cmds {
+	for _, cmd := range scr.cmds {
 		length := len(cmd)
 		if length == 1 {
 			// This is an op code
@@ -133,28 +130,31 @@ func (self *Script) Serialize() []byte {
 		}
 	}
 	total := util.EncodeVarInt(len(raw))
-	var result []byte = make([]byte, len(total)+len(raw))
+	result := make([]byte, len(total)+len(raw))
 	copy(result, total)
 	copy(result[len(total):], raw)
 	return result
 }
 
-func (self *Script) Peek(index int) []byte {
-	return self.cmds[index]
+// Peek at the stack for a given index.
+func (scr *Script) Peek(index int) []byte {
+	return scr.cmds[index]
 }
 
-func (self *Script) Evaluate(z []byte) bool {
+// Evaluate the script.
+// Return true if the script execution succeeded and false otherwise.
+func (scr *Script) Evaluate(z []byte) bool {
 	// create a copy as we may need to add to this list if we have a RedeemScript
-	cmds := make([][]byte, len(self.cmds))
-	copy(cmds, self.cmds)
-	stack := NewOpStack(nil)
+	cmds := make([][]byte, len(scr.cmds))
+	copy(cmds, scr.cmds)
+	stack := newOpStack(nil)
 	for len(cmds) > 0 {
 		cmd := cmds[0]
 		cmds = cmds[1:]
 		if len(cmd) == 1 {
 			// This is an opcode, do what it says.
 			opcode := int(cmd[0])
-			operation := OpCodeFunctions[opcode]
+			operation := opCodeFunctions[opcode]
 			//fmt.Fprintf(os.Stderr, "Running %s...\n", OpCodeNames[opcode])
 			switch opcode {
 			case 99, 100:
@@ -167,24 +167,24 @@ func (self *Script) Evaluate(z []byte) bool {
 				// Signing operations.
 				if !operation(stack, [][]byte{z}) {
 					// TODO: Log output
-					fmt.Fprintf(os.Stderr, "Op %s failed!\n", OpCodeNames[opcode])
+					fmt.Fprintf(os.Stderr, "Op %s failed!\n", opCodeNames[opcode])
 					return false
 				}
 			default:
 				if !operation(stack) {
 					// TODO: log output
-					fmt.Fprintf(os.Stderr, "Op %s failed!\n", OpCodeNames[opcode])
+					fmt.Fprintf(os.Stderr, "Op %s failed!\n", opCodeNames[opcode])
 					return false
 				}
 			}
 		} else {
-			stack.Push(cmd)
+			stack.push(cmd)
 		}
 	}
 	if stack.Length == 0 {
 		return false
 	}
-	if bytes.Equal(stack.Pop(), []byte{0}) {
+	if bytes.Equal(stack.pop(), []byte{0}) {
 		return false
 	}
 	return true

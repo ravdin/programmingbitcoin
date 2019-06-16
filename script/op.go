@@ -10,108 +10,108 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
-func op_0(stack *OpStack, args ...[][]byte) bool {
-	stack.Push(encodeNum(0))
+func op0(stack *opStack, args ...[][]byte) bool {
+	stack.push(encodeNum(0))
 	return true
 }
 
-func op_verify(stack *OpStack, args ...[][]byte) bool {
+func opVerify(stack *opStack, args ...[][]byte) bool {
 	if stack.Length < 1 {
 		return false
 	}
-	elem := stack.Pop()
+	elem := stack.pop()
 	return decodeNum(elem) != 0
 }
 
-func op_dup(stack *OpStack, args ...[][]byte) bool {
+func opDup(stack *opStack, args ...[][]byte) bool {
 	if stack.Length < 1 {
 		return false
 	}
-	stack.Push(stack.Peek())
+	stack.push(stack.peek())
 	return true
 }
 
-func op_equal(stack *OpStack, args ...[][]byte) bool {
+func opEqual(stack *opStack, args ...[][]byte) bool {
 	if stack.Length < 2 {
 		return false
 	}
-	item1 := stack.Pop()
-	item2 := stack.Pop()
+	item1 := stack.pop()
+	item2 := stack.pop()
 	if bytes.Equal(item1, item2) {
-		stack.Push(encodeNum(1))
+		stack.push(encodeNum(1))
 	} else {
-		stack.Push(encodeNum(0))
+		stack.push(encodeNum(0))
 	}
 	return true
 }
 
-func op_equalverify(stack *OpStack, args ...[][]byte) bool {
-	return op_equal(stack) && op_verify(stack)
+func opEqualverify(stack *opStack, args ...[][]byte) bool {
+	return opEqual(stack) && opVerify(stack)
 }
 
-func op_hash160(stack *OpStack, args ...[][]byte) bool {
+func opHash160(stack *opStack, args ...[][]byte) bool {
 	if stack.Length < 1 {
 		return false
 	}
-	element := stack.Pop()
+	element := stack.pop()
 	h160 := util.Hash160(element)
-	stack.Push(h160)
+	stack.push(h160)
 	return true
 }
 
-func op_sha256(stack *OpStack, args ...[][]byte) bool {
+func opSha256(stack *opStack, args ...[][]byte) bool {
 	panic("Not implemented")
 }
 
-func op_checksig(stack *OpStack, args ...[][]byte) bool {
+func opChecksig(stack *opStack, args ...[][]byte) bool {
 	if stack.Length < 2 {
 		return false
 	}
 	z := new(big.Int)
 	z.SetBytes(args[0][0])
 	// the top element of the stack is the SEC pubkey
-	sec_pubkey := stack.Pop()
+	secPubkey := stack.pop()
 	// the next element of the stack is the DER signature
 	// take off the last byte of the signature as that's the hash_type
-	der_signature := stack.Pop()
-	der_signature = der_signature[:len(der_signature)-1]
+	derSignature := stack.pop()
+	derSignature = derSignature[:len(derSignature)-1]
 	// parse the serialized pubkey and signature into objects
-	point := ecc.ParseS256Point(sec_pubkey)
-	sig := ecc.ParseSignature(der_signature)
+	point := ecc.ParseS256Point(secPubkey)
+	sig := ecc.ParseSignature(derSignature)
 	if point.Verify(z, sig) {
-		stack.Push(encodeNum(1))
+		stack.push(encodeNum(1))
 	} else {
-		stack.Push(encodeNum(0))
+		stack.push(encodeNum(0))
 	}
 	return true
 }
 
-func op_checkmultisig(stack *OpStack, args ...[][]byte) bool {
+func opCheckmultisig(stack *opStack, args ...[][]byte) bool {
 	z := new(big.Int)
 	z.SetBytes(args[0][0])
 	if stack.Length < 1 {
 		return false
 	}
-	n := decodeNum(stack.Pop())
+	n := decodeNum(stack.pop())
 	if stack.Length < n+1 {
 		return false
 	}
 	secPubkeys := make([][]byte, n)
 	for i := 0; i < n; i++ {
-		secPubkeys[i] = stack.Pop()
+		secPubkeys[i] = stack.pop()
 	}
-	m := decodeNum(stack.Pop())
+	m := decodeNum(stack.pop())
 	if stack.Length < m+1 {
 		return false
 	}
 	derSignatures := make([][]byte, m)
 	for i := 0; i < m; i++ {
-		sig := stack.Pop()
+		sig := stack.pop()
 		sigLength := len(sig)
 		derSignatures[i] = sig[:sigLength-1]
 	}
 	// OP_CHECKMULTISIG bug
-	stack.Pop()
+	stack.pop()
 	secIndex := 0
 	for derIndex := 0; derIndex < m; derIndex++ {
 		if secIndex >= n {
@@ -128,12 +128,12 @@ func op_checkmultisig(stack *OpStack, args ...[][]byte) bool {
 		}
 	}
 	// The signatures are valid, push a 1 to the stack.
-	stack.Push(encodeNum(1))
+	stack.push(encodeNum(1))
 	return true
 }
 
 func encodeNum(num int) []byte {
-	var result []byte = make([]byte, 0)
+	result := make([]byte, 0)
 	if num == 0 {
 		return result
 	}
@@ -167,8 +167,8 @@ func decodeNum(element []byte) int {
 	if length == 0 {
 		return 0
 	}
-	var result int = int(element[length-1])
-	var negative bool = false
+	result := int(element[length-1])
+	negative := false
 	if element[length-1]&0x80 == 0x80 {
 		negative = true
 		result &= 0x7f

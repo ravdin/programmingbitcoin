@@ -1,43 +1,43 @@
 package script
 
-type OpStack struct {
+type opStack struct {
 	stack    [][]byte
 	Length   int
 	Capacity int
 }
 
-func NewOpStack(cmds [][]byte) *OpStack {
+func newOpStack(cmds [][]byte) *opStack {
 	capacity := 16
 	for capacity < len(cmds) {
 		capacity += 16
 	}
 	stack := make([][]byte, capacity)
-	result := OpStack{stack: stack, Length: 0, Capacity: capacity}
+	result := opStack{stack: stack, Length: 0, Capacity: capacity}
 	for _, item := range cmds {
-		result.Push(item)
+		result.push(item)
 	}
 	return &result
 }
 
-func (self *OpStack) Push(item []byte) {
-	if self.Length == self.Capacity {
-		self.Capacity += 16
-		newStack := make([][]byte, self.Capacity)
-		copy(newStack, self.stack)
-		self.stack = newStack
+func (stack *opStack) push(item []byte) {
+	if stack.Length == stack.Capacity {
+		stack.Capacity += 16
+		newStack := make([][]byte, stack.Capacity)
+		copy(newStack, stack.stack)
+		stack.stack = newStack
 	}
-	self.stack[self.Length] = item
-	self.Length++
+	stack.stack[stack.Length] = item
+	stack.Length++
 }
 
-func (self *OpStack) Pop() []byte {
-	if self.Length == 0 {
+func (stack *opStack) pop() []byte {
+	if stack.Length == 0 {
 		panic("Can't pop from empty stack!")
 	}
-	self.Length--
-	return self.stack[self.Length]
+	stack.Length--
+	return stack.stack[stack.Length]
 }
 
-func (self *OpStack) Peek() []byte {
-	return self.stack[self.Length-1]
+func (stack *opStack) peek() []byte {
+	return stack.stack[stack.Length-1]
 }

@@ -19,19 +19,19 @@ func createTx(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	txIns := make([]*tx.TxIn, len(t.Inputs))
+	txIns := make([]*tx.Input, len(t.Inputs))
 	for i, input := range t.Inputs {
 		prevTx := util.HexStringToBytes(input.PreviousValue)
-		txIns[i] = tx.NewTxIn(prevTx, input.PreviousIndex, nil, 0xffffffff)
+		txIns[i] = tx.NewInput(prevTx, input.PreviousIndex, nil, 0xffffffff)
 	}
 
-	txOuts := make([]*tx.TxOut, len(t.Outputs))
+	txOuts := make([]*tx.Output, len(t.Outputs))
 	for i, output := range t.Outputs {
 		script := script.P2pkhScript(util.DecodeBase58(output.Address))
-		txOuts[i] = tx.NewTxOut(output.Amount, script)
+		txOuts[i] = tx.NewOutput(output.Amount, script)
 	}
 
-	txObj := tx.NewTx(t.Version, txIns, txOuts, 0, t.Testnet)
+	txObj := tx.NewTransaction(t.Version, txIns, txOuts, 0, t.Testnet)
 	secret := util.LittleEndianToBigInt(util.Hash256([]byte(t.Passphrase)))
 	pk := ecc.NewPrivateKey(secret)
 	if txObj.SignInput(0, pk) {

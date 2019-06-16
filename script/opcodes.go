@@ -1,20 +1,20 @@
 package script
 
-type OpCodeFunction func(stack *OpStack, args ...[][]byte) bool
+type opCodeFunction func(stack *opStack, args ...[][]byte) bool
 
-var OpCodeFunctions = map[int]OpCodeFunction{
-	0:   op_0,
-	105: op_verify,
-	118: op_dup,
-	135: op_equal,
-	136: op_equalverify,
-	168: op_sha256,
-	169: op_hash160,
-	172: op_checksig,
-	174: op_checkmultisig,
+var opCodeFunctions = map[int]opCodeFunction{
+	0:   op0,
+	105: opVerify,
+	118: opDup,
+	135: opEqual,
+	136: opEqualverify,
+	168: opSha256,
+	169: opHash160,
+	172: opChecksig,
+	174: opCheckmultisig,
 }
 
-var OpCodeNames = map[int]string{
+var opCodeNames = map[int]string{
 	0:   `OP_0`,
 	76:  `OP_PUSHDATA1`,
 	77:  `OP_PUSHDATA2`,
