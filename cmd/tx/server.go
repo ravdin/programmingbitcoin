@@ -14,7 +14,7 @@ import (
 
 func createTx(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
-	var t Transaction
+	var t transaction
 	err := decoder.Decode(&t)
 	if err != nil {
 		panic(err)

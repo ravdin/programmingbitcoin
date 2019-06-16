@@ -8,7 +8,8 @@ import (
 	"github.com/ravdin/programmingbitcoin/util"
 )
 
-type MerkleBlock struct {
+// Block represents a merkle block.
+type Block struct {
 	Version    uint32
 	PrevBlock  [32]byte
 	MerkleRoot [32]byte
@@ -20,7 +21,8 @@ type MerkleBlock struct {
 	Flags      []byte
 }
 
-func NewMerkleBlock(version uint32,
+// NewBlock returns a new merkle block.
+func NewBlock(version uint32,
 	prevBlock []byte,
 	merkleRoot []byte,
 	timestamp uint32,
@@ -28,8 +30,8 @@ func NewMerkleBlock(version uint32,
 	nonce []byte,
 	total uint32,
 	hashes [][]byte,
-	flags []byte) *MerkleBlock {
-	result := &MerkleBlock{
+	flags []byte) *Block {
+	result := &Block{
 		Version:   version,
 		Timestamp: timestamp,
 		Total:     total,
@@ -43,36 +45,36 @@ func NewMerkleBlock(version uint32,
 	return result
 }
 
-func (self *MerkleBlock) String() string {
+func (block *Block) String() string {
 	result := make([]string, 3)
-	hashes := make([]string, len(self.Hashes))
-	for i, h := range self.Hashes {
+	hashes := make([]string, len(block.Hashes))
+	for i, h := range block.Hashes {
 		hashes[i] = fmt.Sprintf("\t%x", h)
 	}
-	result[0] = fmt.Sprintf("%d", self.Version)
+	result[0] = fmt.Sprintf("%d", block.Version)
 	result[1] = strings.Join(hashes, "")
-	result[2] = fmt.Sprintf("%x", self.Flags)
+	result[2] = fmt.Sprintf("%x", block.Flags)
 	return strings.Join(result, "\n")
 }
 
-// Takes a byte stream and parses a merkle block. Returns a Merkle Block object
-func (self *MerkleBlock) Parse(reader *bytes.Reader) *MerkleBlock {
+// Parse a merkle block from a byte reader. Returns a Merkle Block object
+func (block *Block) Parse(reader *bytes.Reader) *Block {
 	buffer4 := make([]byte, 4)
 	buffer32 := make([]byte, 32)
 	reader.Read(buffer4)
-	self.Version = util.LittleEndianToInt32(buffer4)
+	block.Version = util.LittleEndianToInt32(buffer4)
 	reader.Read(buffer32)
-	copy(self.PrevBlock[:32], util.ReverseByteArray(buffer32))
+	copy(block.PrevBlock[:32], util.ReverseByteArray(buffer32))
 	reader.Read(buffer32)
-	copy(self.MerkleRoot[:32], util.ReverseByteArray(buffer32))
+	copy(block.MerkleRoot[:32], util.ReverseByteArray(buffer32))
 	reader.Read(buffer4)
-	self.Timestamp = util.LittleEndianToInt32(buffer4)
+	block.Timestamp = util.LittleEndianToInt32(buffer4)
 	reader.Read(buffer4)
-	copy(self.Bits[:4], buffer4)
+	copy(block.Bits[:4], buffer4)
 	reader.Read(buffer4)
-	copy(self.Nonce[:4], buffer4)
+	copy(block.Nonce[:4], buffer4)
 	reader.Read(buffer4)
-	self.Total = util.LittleEndianToInt32(buffer4)
+	block.Total = util.LittleEndianToInt32(buffer4)
 	numHashes := util.ReadVarInt(reader)
 	hashes := make([][]byte, numHashes)
 	for i := range hashes {
@@ -80,23 +82,23 @@ func (self *MerkleBlock) Parse(reader *bytes.Reader) *MerkleBlock {
 		hashes[i] = make([]byte, 32)
 		copy(hashes[i], util.ReverseByteArray(buffer32))
 	}
-	self.Hashes = hashes
+	block.Hashes = hashes
 	flagLength := util.ReadVarInt(reader)
-	self.Flags = make([]byte, flagLength)
-	reader.Read(self.Flags)
-	return self
+	block.Flags = make([]byte, flagLength)
+	reader.Read(block.Flags)
+	return block
 }
 
-// Verifies whether the merkle tree information validates to the merkle root
-func (self *MerkleBlock) IsValid() bool {
-	flagBits := util.BytesToBitField(self.Flags)
-	hashes := make([][]byte, len(self.Hashes))
-	for i, hash := range self.Hashes {
+// IsValid verifies whether the merkle tree information validates to the merkle root
+func (block *Block) IsValid() bool {
+	flagBits := util.BytesToBitField(block.Flags)
+	hashes := make([][]byte, len(block.Hashes))
+	for i, hash := range block.Hashes {
 		hashes[i] = make([]byte, len(hash))
 		copy(hashes[i], hash)
 		util.ReverseByteArray(hashes[i])
 	}
-	tree := NewMerkleTree(int(self.Total))
+	tree := NewTree(int(block.Total))
 	tree.PopulateTree(flagBits, hashes)
-	return bytes.Equal(util.ReverseByteArray(tree.Root()), self.MerkleRoot[:])
+	return bytes.Equal(util.ReverseByteArray(tree.Root()), block.MerkleRoot[:])
 }

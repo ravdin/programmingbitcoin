@@ -9,7 +9,7 @@ import (
 
 func TestMerkleTree(t *testing.T) {
 	t.Run("test init", func(t *testing.T) {
-		tree := NewMerkleTree(9)
+		tree := NewTree(9)
 		values := []int{1, 2, 3, 5, 9}
 		for i, value := range values {
 			actual := len(tree.Nodes[i])
@@ -43,7 +43,7 @@ func TestMerkleTree(t *testing.T) {
 		for i := range flagBits {
 			flagBits[i] = 1
 		}
-		tree := NewMerkleTree(len(hashes))
+		tree := NewTree(len(hashes))
 		tree.PopulateTree(flagBits, hashes)
 		expected := `597c4bafe3832b17cbbabe56f878f4fc2ad0f6a402cee7fa851a9cb205f87ed1`
 		actual := fmt.Sprintf("%x", tree.Root())
@@ -64,7 +64,7 @@ func TestMerkleTree(t *testing.T) {
 		for i := range flagBits {
 			flagBits[i] = 1
 		}
-		tree := NewMerkleTree(len(hashes))
+		tree := NewTree(len(hashes))
 		tree.PopulateTree(flagBits, hashes)
 		expected := `a8e8bd023169b81bc56854137a135b97ef47a6a7237f4c6e037baed16285a5ab`
 		actual := fmt.Sprintf("%x", tree.Root())
