@@ -50,7 +50,7 @@ func TestBase58(t *testing.T) {
 	}
 }
 
-func Testp2pkhAddress(t *testing.T) {
+func TestP2pkhAddress(t *testing.T) {
 	h160, _ := hex.DecodeString("74d691da1574e6b3c192ecfb52cc8984ee7b6c56")
 	mainnet := "1BenRpVUFK65JFWcQSuHnJKzc4M8ZP8Eqa"
 	testnet := "mrAjisaT4LXL5MzE81sfcDYKU3wqWSvf9q"
@@ -64,7 +64,7 @@ func Testp2pkhAddress(t *testing.T) {
 	}
 }
 
-func Testp2shAddress(t *testing.T) {
+func TestP2shAddress(t *testing.T) {
 	h160 := HexStringToBytes("74d691da1574e6b3c192ecfb52cc8984ee7b6c56")
 	mainnet := "3CLoMMyuoDQTPRD3XYZtCvgvkadrAdvdXh"
 	testnet := "2N3u1R6uwQfuobCqbCgBkpsgBxvr1tZpe7B"
