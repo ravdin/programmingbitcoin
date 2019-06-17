@@ -190,8 +190,6 @@ func (p *S256Point) Address(compressed bool, testnet bool) string {
 	var prefix byte
 	if testnet {
 		prefix = 0x6f
-	} else {
-		prefix = 0
 	}
 	withPrefix := make([]byte, len(h160)+1)
 	withPrefix[0] = prefix
